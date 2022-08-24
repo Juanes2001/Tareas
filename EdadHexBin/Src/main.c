@@ -21,10 +21,9 @@ unsigned int number_of_seconds = 0;
 unsigned int number_of_hours = 0;
 //Las variables creadas a partir de aca seran de uso a modo de replica para distintas representaciones
 //de numeros decimales en binarios y hexagesimales; tambien para usarlas en operaciones logicas.
-unsigned short number_of_days_bin = 0;
+unsigned int number_of_days_bin = 0;
 unsigned int number_of_hours_bin = 0;
 unsigned int number_of_seconds_hex = 0;
-unsigned int number_of_days_bin_value=0;
 
 int main(void)
 {
@@ -81,32 +80,27 @@ int main(void)
 	 */
 
 	/*
-	 * Aplicamos una primera vez sobre el valor numerico binario del numero de dias transcurridos en formato
-	 * short, es decir, tenemos para este valor 16 bits. Antes de usar la operacion tenemos  0b0001111010010010
+	 * Aplicamos una primera vez sobre el valor númerico binario del numero de dias transcurridos en formato
+	 * int, es decir, tenemos para este valor 32 bits. Antes de usar la operacion tenemos  0b1111010010010
 	 */
 	number_of_days_bin = number_of_days_bin << 1;
 	/*
-	 *Luego de aplicar el shift una vez, vemos que obtenemos el siguiente resultado ---> 0b0011110100100100 el cual corresponde al valor decimal
-	 *15652. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
+	 *Luego de aplicar el shift una vez, vemos que obtenemos el siguiente resultado ---> 0b11110100100100 el cual corresponde al valor decimal
+	 *15652 que corresponde al doble del valor inicial. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
 	 */
 
 	number_of_days_bin = number_of_days_bin << 1;
 	/*
-	 * Al aplicar de nuevo la operacion shift sobre el resultado, veremos que 0b0011110100100100 se convierte a
-	 * ---> 0b0111101001001000 que corresponde en valor decimal a 31304. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
+	 * Al aplicar de nuevo la operacion shift sobre el resultado, veremos que 0b11110100100100 se convierte a
+	 * ---> 0b111101001001000 que corresponde en valor decimal a 31304, de nuevo, vemos que el numero obtenido es el doble
+	 * del valor anterior. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
 	 */
 	number_of_days_bin = number_of_days_bin << 4;
 
 	/*
 	 * Por ultimo, ejecutamos la funcion Left-shift cuatro veces seguidas. A partir del ultimo resultado
-	 * 0111101001001000 tendremos el siguiente resultado ---> 0b1010010010000000 que corresponde al valor decimal  positivo 42112
-	 * Pero lo que ocurre en el live expression es que al ejecutar la ultima linea de codigo, y obtener el ultimo numero binario, vemos que no aparece
-	 * el 42112 sino que aparece en cambio el -23424, a pesar de ser una variable unsigned. La siguiente lineaq de codigo demostrara que
-	 */
-	number_of_days_bin_value = 0b1010010010000000;
-	/*
-	 * Vemnos que efectivamente el resultado final del shift es el valor 42112, solo que para visualizar su valor positivo en el live expression es necesario aumentar su
-	 * memoria de 16 bits a 32 bits, en forma binaria vemos que number_of_days_bin, y number_of_days_bin_value son exactamente el mismo valor.
+	 * 0b111101001001000 tendremos el siguiente resultado ---> 0b1111010010010000000 que corresponde al valor decimal  positivo 500864,
+	 * 4 veces el resultado anterior en decimal.
 	 */
 
 	/**
@@ -115,24 +109,24 @@ int main(void)
 
 	/*
 	 * Aplicamos una primera vez sobre el valor numerico binario del numero de horas transcurridos en formato
-	 * int, es decir, tenemos para este valor 32 bits. Antes de usar la operacion tenemos  0b00000000000000101101110110110000
+	 * int, es decir, tenemos para este valor 32 bits. Antes de usar la operacion tenemos  0b101101110110110000
 	 */
 	number_of_hours_bin = number_of_hours_bin >> 1;
 	/*
-	 *Luego de aplicar el shift una vez, vemos que obtenemos el siguiente resultado ---> 0b00000000000000010110111011011000 el cual corresponde al valor decimal
-	 *93912. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
+	 *Luego de aplicar el shift una vez, vemos que obtenemos el siguiente resultado ---> 0b10110111011011000 el cual corresponde al valor decimal
+	 *93912, especificamente la mitad del valor inicial. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
 	 */
 
 	number_of_hours_bin = number_of_hours_bin >> 1;
 	/*
-	 * Al aplicar de nuevo la operacion shift sobre el resultado, veremos que 0b00000000000000010110111011011000 se convierte a
-	 * ---> 0b00000000000000001011011101101100 que corresponde en valor decimal a 46956. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
+	 * Al aplicar de nuevo la operacion shift sobre el resultado, veremos que 0b10110111011011000 se convierte a
+	 * ---> 0b1011011101101100 que corresponde en valor decimal a 46956, especificamente la mitad del valor anterior. (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
 	 */
 	number_of_hours_bin = number_of_hours_bin >> 4;
 
 	/*
 	 * Por ultimo, ejecutamos la funcion Right-shift cuatro veces seguidas. A partir del ultimo resultado
-	 * 0b00000000000000001011011101101100 tendremos el siguiente resultado ---> 0b00000000000000000000101101110110 que corresponde al valor decimal 2934
+	 * 0b1011011101101100 tendremos el siguiente resultado ---> 0b101101110110 que corresponde al valor decimal 2934, especificamente un cuarto del valor encontrado.
 	 * (Ejecutar el codigo hasta este paso y ver efectivamente que si es verdad)
 	 */
 
@@ -141,17 +135,25 @@ int main(void)
 	 */
 
 	/*
-	 * Primero aplicaremos la funcion not (~) a el numero de dias , inicialmente tendremos el valor binario
-	 * 0b0001111010010010, el cual su negacion cambia a 0b1110000101101101
+	 * Le daremos de nuevo el valor inicial del numero de dias
 	 */
-	number_of_days = ~number_of_days;
+	number_of_days_bin = number_of_days;
+	/*
+	 * Luego aplicaremos la funcion not (~) a el numero de dias, inicialmente tendremos el valor binario
+	 * 0b1111010010010, el cual su negacion cambia a 0b1110000101101101
+	 */
+
+	number_of_days_bin = ~number_of_days_bin;
 
 	/*
-	 * Luego agregamos 0b1 binario a el valor obtenido
+	 * Luego agregamos 0b1 binario a el valor obtenido.
 	 */
-	number_of_days = number_of_days + 0b1;
+	number_of_days_bin = number_of_days_bin + 0b1;
+	//number_of_days_bin = number_of_days_bin + number_of_days;
+	/*
+	 *
+	 */
 
-	while(1){
 
-	}
+
 }
