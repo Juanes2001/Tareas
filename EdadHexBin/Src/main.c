@@ -24,6 +24,10 @@ unsigned int number_of_hours = 0;
 unsigned int number_of_days_bin = 0;
 unsigned int number_of_hours_bin = 0;
 unsigned int number_of_seconds_hex = 0;
+unsigned int bin1=0;
+unsigned int bin2=0;
+
+
 
 int main(void)
 {
@@ -140,7 +144,7 @@ int main(void)
 	number_of_days_bin = number_of_days;
 	/*
 	 * Luego aplicaremos la funcion not (~) a el numero de dias, inicialmente tendremos el valor binario
-	 * 0b1111010010010, el cual su negacion cambia a 0b1110000101101101
+	 * 0b1111010010010, el cual su negacion cambia a 0b11111111111111111110000101101101
 	 */
 
 	number_of_days_bin = ~number_of_days_bin;
@@ -149,9 +153,33 @@ int main(void)
 	 * Luego agregamos 0b1 binario a el valor obtenido.
 	 */
 	number_of_days_bin = number_of_days_bin + 0b1;
-	//number_of_days_bin = number_of_days_bin + number_of_days;
+	number_of_days_bin = number_of_days_bin + number_of_days;
 	/*
+	 *Finalmente sumamos el valor obtenido, posterior a sumar un uno binario, con el valor original del número
+	 * de dias y obtenemos como resultado 0.
+	 */
+	/*
+	 * La explicacion de porque ocurre esto es a siguiente, entedermos el proceso mas facilmente si usamos la
+	 * propiedad conmutativa de la suma, independientemente de sistema numerico en el que nos encontremos.
+	 * Si sumamos primero el valor negado del numero de dias con su no negado, obtendremos 32 bits en verdadero, es decir,
+	 * unos binarios. posteriormente si sumamos 1 a el valor maximo que puede alcanzarse, veremos que el conteo se reinicia,
+	 * ya que el formato no le es posible mostrar el valor siguiente al maximo.
 	 *
+	 * Veremos que para cualquier valor binario esto se cumple
+	 */
+
+	bin1 = 0b10111101110101011100000110101010;
+	bin2= ~bin1 + bin1;
+	bin2= bin2 + 0b1;
+	//Al ejecutar vemos que efectivamente el numer creado de forma aleatoria (bin1) se transfoma en 0 binario
+	//al aplicar el procedimiento.
+
+	/**
+	 * Punto 9--> Aplicación de mascaras sobre números hexagesimales
+	 */
+	/*
+	 * Como el numero en la posicion 4 corresponde a d osea el valor 13, entonces aplicaremos una mascara sobre el numero
+	 * para obtener el valor de las posiciones 0 2 y 6.
 	 */
 
 
