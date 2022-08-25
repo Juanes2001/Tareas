@@ -24,9 +24,9 @@ unsigned int number_of_hours = 0;
 unsigned int number_of_days_bin = 0;
 unsigned int number_of_hours_bin = 0;
 unsigned int number_of_seconds_hex = 0;
-unsigned int bin1=0;
-unsigned int bin2=0;
-
+unsigned int bin1 = 0;
+unsigned int bin2 = 0;
+unsigned int mask_hex = 0;
 
 
 int main(void)
@@ -177,11 +177,61 @@ int main(void)
 	/**
 	 * Punto 9--> Aplicación de mascaras sobre números hexagesimales
 	 */
+
 	/*
 	 * Como el numero en la posicion 4 corresponde a d osea el valor 13, entonces aplicaremos una mascara sobre el numero
 	 * para obtener el valor de las posiciones 0 2 y 6.
 	 */
+	// Teniendo el valor vinario del numero de segundos como referencia 0b00101000010011010111101100000000, construiremos la mascara en binario
+	// primero y luego visualizamos tal mascara en hexagesimal.
+	mask_hex= 0b00001111000000000000111100001111;
+	/*
+	 * Vemos entonces que la mascara que contruimos cuenta con los valores tales que se cancelen las posiciones 1,3,4,5 y 7 y se mantengan intactas las posiciones
+	 * 0,2 y 6 luego de que a continuacion realizemos la operacion AND (&); asi lograremos salvaguardar los valores hexagesimales propios de esas posiciones.
+	 */
 
+	number_of_seconds_hex = mask_hex & number_of_seconds_hex ;
 
+	//Efectivamente logramos hacerle mascara a los valores pedidos, asi la mascara que usamos en forma hexagesimal sera la siguiente
+
+	mask_hex = 0xf000f0f;
+
+	/**
+	 * Punto 10 ---> Aplicacion de la funcion AND y el uso de mascaras, segunda parte.
+	 */
+	// comenzamos dandole el valor del numero de segundos a la variable modificable.
+	number_of_seconds_hex= number_of_seconds;
+
+	/*
+	 * Luego, usando la mascara 0x040 que corresponde en binario al valor 0b01000000 la aplicamops sobre el numero de segundos con la operacion
+	 * AND.
+	 */
+	mask_hex = 0x040;
+
+	number_of_seconds_hex = number_of_seconds_hex & mask_hex;
+
+	// El resultado es cero, por lo que aplicaremos una mascara a el numero de segundos para que sea borrada solo la posicion 6.
+
+	number_of_seconds_hex= number_of_seconds;
+	mask_hex= 0b11110000111111111111111111111111;
+
+	number_of_seconds_hex = number_of_seconds_hex & mask_hex;
+
+	//Efectivamente eliminamos la sexta posicion que correspondia al valor de 8 en el numero de segundos, obtenemos 0x204d7b00
+
+	/**
+	 * Punto 11--->Operacion (!)
+	 */
+
+	//procederemos a averiguar que funcion cumple el operador signo de admiracion sobre la variable del numero de segundos.
+	number_of_seconds_hex= number_of_seconds;
+	number_of_seconds_hex= !number_of_seconds_hex;
+	number_of_hours_bin = !number_of_hours_bin;
+	bin1 =  !bin1 ;
+	mask_hex =  !mask_hex;
+
+	/*
+	 * Despues de muchas pruebas, vemos que la operacion lo que hace es anular a la variable sobre la que se aplica la operacion.
+	 */
 
 }
