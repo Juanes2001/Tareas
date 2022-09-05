@@ -179,16 +179,5 @@ uint32_t GPIO_ReadPin (GPIO_Handler_t *pPinHandler){
 	return pinValue;
 }
 
-void GPIOxTooglePin (GPIO_Handler_t *pPinState){
-	uint8_t state = GPIO_ReadPin (pPinState);
-	if (state== SET){
-		GPIO_WritePin(pPinState, RESET);
-	}
-	else{
-		GPIO_WritePin(pPinState, SET);
-	}
 
-	//Cargamos a la variable auxiliar el registro ODR
-
-}
 

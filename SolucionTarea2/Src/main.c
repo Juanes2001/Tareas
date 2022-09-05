@@ -89,9 +89,33 @@ int main(void){
 	 * Punto 2--> Creación de la función GPIOxTooglePin para cambiar el estado del PINx.
 	 */
 
-	while(1){
+	void GPIOxTooglePin (GPIO_Handler_t *pPinState){
+		uint8_t state = GPIO_ReadPin (pPinState);
+		if (state== SET){
+			GPIO_WritePin(pPinState, RESET);
+		}
+		else{
+			GPIO_WritePin(pPinState, SET);
+		}
 
+		/*
+		 * Vemos que la función que cambia de estado el pin deseado es simple, se usan las
+		 * funciones de leer y escribir sobre la posición de memoria correspondiente  al pin
+		 * que se desea modificar. Hacemos una lectura de el estado actual del pin con la funcion
+		 * GPIO_ReadPin() usando el puntero *pPinState de tipo GPIO_Handler que apunta a los elementos
+		 * de la estructura asignandole la posicion de memoria en la que se guardan las configuraciones
+		 * del pin respectivo. Posterior a la lectura, la respuesta sera un valor logico 0 o 1, (OFF/ON respectivamente)
+		 * por lo que hacemos un condicional simple , evaluando que si el estado es encendido (1) entonces aplicamos la
+		 * función GPIO_WritePin() para cambiar el estado a apagado, de lo contrario, cambia el estado a encendido con
+		 * la misma funcion write.
+		 */
 
+	}
+
+	for (uint8_t i=0; i<6; i++){
+
+		//Vemos que al aplicar el ciclo for, y observando el estado del pin en el IDR dentro del handlerUserLedPin.
+		//estara cambiando de estado cada vez que aplicamos la funcion , BIN_IDR almacenará el estado del pin.
 		GPIOxTooglePin (&handlerUserLedPin);
 		BIN_IDR=GPIO_ReadPin(&handlerUserLedPin);
 	}
