@@ -2,10 +2,14 @@
  * main.c
  *
  *  Created on: Aug 20, 2022
- *      Author: JUAN ESTEBAN
+ *      Author: JUAN ESTEBAN RODRIGUEZ OCHOA
+ *      correo: jrodriguezoc@unal.edu.co
+ *
  */
 
 #include <stdint.h>
+
+// Mi fecha de nacimiento es el 9 de marzo del 2001
 
 /**
  * Punto 1--> creacion de las variables
