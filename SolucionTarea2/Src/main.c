@@ -11,6 +11,8 @@
 #include "stm32f411xx_hal.h"
 #include "GPIOxDriver.h"
 
+uint8_t BIN_IDR = 0;
+
 /*Funcion principal del programa. Es aca donde se ejecuta todo
  */
 
@@ -64,7 +66,8 @@ int main(void){
 
 
 
-	uint16_t BITS_IDR = GPIOA->IDR;
+	//uint16_t BITS_IDR = GPIOA->IDR; //Descomentar para observar en la evolucion de las variables como se ve modificada la variable
+
 	/*
 	 * En la variable BITS_IDR almacenaremos el binario del registro IDR, el cual corresponde a
 	 * los estados de los pines 0 al 15 de cada puerto, en el ejemplo anterior vemos que modificamos
@@ -82,7 +85,7 @@ int main(void){
 	 * return pinValue
 	 */
 
-	uint8_t BIN_IDR = GPIO_ReadPin(&handlerUserLedPin);
+	//uint8_t BIN_IDR = GPIO_ReadPin(&handlerUserLedPin);
 	//Al ejecutar paso a paso la funcion vemos que ahora si cumple con lo que queremos.
 
 	/**
@@ -120,7 +123,42 @@ int main(void){
 		BIN_IDR=GPIO_ReadPin(&handlerUserLedPin);
 	}
 
+	/**
+	 * Punto 3---> Configuracion del user Button para que por pulsaciones se ejecute la funcion GPIOxTooglePin
+	 * sobre el user LED.
+	 */
 
+
+	GPIO_Handler_t handlerUserButton2 = {0};
+
+	handlerUserButton2.pGPIOx                                = GPIOC;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinNumber         = PIN_13;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_IN;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
+	handlerUserButton2.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+
+	GPIO_Config(&handlerUserButton2);
+
+	BIN_IDR = GPIO_ReadPin(&handlerUserButton2);
+
+	while(1){
+
+
+		if (GPIO_ReadPin(&handlerUserLedPin) == 1 || GPIO_ReadPin(&handlerUserLedPin) == 0){
+			if (GPIO_ReadPin(&handlerUserButton2)==0){
+				GPIOxTooglePin(&handlerUserLedPin);
+			}
+			else{
+				NOP();
+			}
+		}
+		else{
+			NOP();
+		}
+
+	}
 	while(1){
 		NOP();
 	}
