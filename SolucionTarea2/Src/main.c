@@ -40,7 +40,7 @@ int main(void){
 	handlerUserLedPin.GPIO_PinConfig.GPIO_PinNumber         = PIN_5;
 	handlerUserLedPin.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_OUT;
 	handlerUserLedPin.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
-	handlerUserLedPin.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_PULLDOWN;
+	handlerUserLedPin.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
 	handlerUserLedPin.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
 	handlerUserLedPin.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0; //Ninguna función
 
@@ -143,22 +143,115 @@ int main(void){
 
 	BIN_IDR = GPIO_ReadPin(&handlerUserButton2);
 
+//	while(1){ //Descomentar para observar la funcion de encendido y apagado por el user button
+//
+//
+//		if (GPIO_ReadPin(&handlerUserLedPin) == 1 || GPIO_ReadPin(&handlerUserLedPin) == 0){
+//			if (GPIO_ReadPin(&handlerUserButton2)==0){
+//				GPIOxTooglePin(&handlerUserLedPin);
+//			}
+//			else{
+//				NOP();
+//			}
+//		}
+//		else{
+//			NOP();
+//		}
+//
+//
+//	}
+
+
+	/**
+	 * Punto 4---> Configuración de LEDs controladas por el microcontrolador.
+	 */
+
+	GPIO_Handler_t handlerUserButton3 = {0};
+
+	handlerUserButton3.pGPIOx                                = GPIOC;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinNumber         = PIN_6;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_IN;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_PULLDOWN;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
+	handlerUserButton3.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+
+	GPIO_Config(&handlerUserButton3);
+
+	BIN_IDR = GPIO_ReadPin(&handlerUserButton3);
+
+	GPIO_Handler_t handlerUserLedPin1 = {0};
+
+	handlerUserLedPin1.pGPIOx                                = GPIOC;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinNumber         = PIN_10;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_OUT;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
+	handlerUserLedPin1.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+
+	GPIO_Config(&handlerUserLedPin1);
+
+	GPIO_Handler_t handlerUserLedPin2 = {0};
+
+	handlerUserLedPin2.pGPIOx                                = GPIOC;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinNumber         = PIN_11;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_OUT;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
+	handlerUserLedPin2.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+
+	GPIO_Config(&handlerUserLedPin2);
+
+	GPIO_Handler_t handlerUserLedPin3 = {0};
+
+	handlerUserLedPin3.pGPIOx                                = GPIOC;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinNumber         = PIN_12;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinMode           = GPIO_MODE_OUT;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinOPType         = GPIO_OTYPE_PUSHPULL;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinPuPdControl    = GPIO_PUPDR_NOTHING;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinSpeed          = GPIO_OSPEEDR_MEDIUM;
+	handlerUserLedPin3.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
+
+	GPIO_Config(&handlerUserLedPin3);
+
+	BIN_IDR = GPIO_ReadPin(&handlerUserButton3);
+
 	while(1){
 
 
-		if (GPIO_ReadPin(&handlerUserLedPin) == 1 || GPIO_ReadPin(&handlerUserLedPin) == 0){
-			if (GPIO_ReadPin(&handlerUserButton2)==0){
-				GPIOxTooglePin(&handlerUserLedPin);
-			}
-			else{
+
+		if (GPIO_ReadPin(&handlerUserButton3)==1){
+			GPIO_WritePin(&handlerUserLedPin1, SET);
+			GPIO_WritePin(&handlerUserLedPin2, SET);
+			GPIO_WritePin(&handlerUserLedPin3, SET);
+			for(uint32_t i=0; i<=5000000;i++){
 				NOP();
 			}
+			GPIO_WritePin(&handlerUserLedPin3, RESET);
+			for(uint32_t i=0; i<=2000000;i++){
+							NOP();
+			}
+			GPIO_WritePin(&handlerUserLedPin2, RESET);
+			for(uint32_t i=0; i<=1000000;i++){
+										NOP();
+			}
+			GPIO_WritePin(&handlerUserLedPin1, RESET);
+
 		}
 		else{
 			NOP();
 		}
 
 	}
+
+
+
+
+
+
+
 	while(1){
 		NOP();
 	}
