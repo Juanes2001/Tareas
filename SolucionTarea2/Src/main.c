@@ -124,11 +124,13 @@ int main(void){
 	}
 
 	/**
-	 * Punto 3---> Configuracion del user Button para que por pulsaciones se ejecute la funcion GPIOxTooglePin
+	 * Punto 3---> Configuración del user Button para que por pulsaciones se ejecute la funcion GPIOxTooglePin
 	 * sobre el user LED.
 	 */
 
-
+	/*
+	 * A continuacion vamos a definir
+	 */
 	GPIO_Handler_t handlerUserButton2 = {0};
 
 	handlerUserButton2.pGPIOx                                = GPIOC;
@@ -143,23 +145,19 @@ int main(void){
 
 	BIN_IDR = GPIO_ReadPin(&handlerUserButton2);
 
-//	while(1){ //Descomentar para observar la funcion de encendido y apagado por el user button
-//
-//
-//		if (GPIO_ReadPin(&handlerUserLedPin) == 1 || GPIO_ReadPin(&handlerUserLedPin) == 0){
-//			if (GPIO_ReadPin(&handlerUserButton2)==0){
-//				GPIOxTooglePin(&handlerUserLedPin);
-//			}
-//			else{
-//				NOP();
-//			}
-//		}
-//		else{
-//			NOP();
-//		}
-//
-//
-//	}
+	while(1){ //Descomentar para observar la funcion de encendido y apagado por el user button
+
+
+			if (GPIO_ReadPin(&handlerUserButton2)==0){
+				GPIOxTooglePin(&handlerUserLedPin);
+				for(uint32_t i=0; i<160000;i++){
+					NOP();
+				}
+
+			}
+
+
+	}
 
 
 	/**
@@ -231,11 +229,11 @@ int main(void){
 			}
 			GPIO_WritePin(&handlerUserLedPin3, RESET);
 			for(uint32_t i=0; i<=2000000;i++){
-							NOP();
+				NOP();
 			}
 			GPIO_WritePin(&handlerUserLedPin2, RESET);
 			for(uint32_t i=0; i<=1000000;i++){
-										NOP();
+				NOP();
 			}
 			GPIO_WritePin(&handlerUserLedPin1, RESET);
 
