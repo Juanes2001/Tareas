@@ -2,7 +2,8 @@
  * IntroGPIOxMain.c
  *
  *  Created on: Aug 27, 2022
- *      Author: JUAN ESTEBAN
+ *      Author: JUAN ESTEBAN RODRIGUEZ OCHOA
+ *      correo: jrodriguezoc@unal.edu.co
  */
 
 
@@ -129,7 +130,8 @@ int main(void){
 	 */
 
 	/*
-	 * A continuacion vamos a definir
+	 * A continuacion vamos a definir la configuracion del USER Button para asi poder programar el estado del mismo
+	 * y vincularlo con el estado del LED.
 	 */
 	GPIO_Handler_t handlerUserButton2 = {0};
 
@@ -142,26 +144,42 @@ int main(void){
 	handlerUserButton2.GPIO_PinConfig.GPIO_PinAltFunMode     = AF0;
 
 	GPIO_Config(&handlerUserButton2);
-
-	BIN_IDR = GPIO_ReadPin(&handlerUserButton2);
-
-	while(1){ //Descomentar para observar la funcion de encendido y apagado por el user button
-
-
-			if (GPIO_ReadPin(&handlerUserButton2)==0){
-				GPIOxTooglePin(&handlerUserLedPin);
-				for(uint32_t i=0; i<160000;i++){
-					NOP();
-				}
-
-			}
-
-
+	//Aqui en BIN_IDR estaremos leyendo el estado del PIN sin pl
+	for(uint8_t i=0; i<3;i++){
+		BIN_IDR = GPIO_ReadPin(&handlerUserButton2); //Para cada iteracion analizar el estado del PIN C13 con el User Button
+													 // presionado y otro con el mismo sin presionar, veremos que respectivamente
+													 // la variable almacenara un 0 o un 1.
 	}
+
+	/*
+	 * El siguiente loop infinito muestra la funcion de el GPIOxTooglePin() vinculado con el USER Button,
+	 * Vemos que para que cada pulsacion corresponda exactamente con un estado especifico en el PIN del LED
+	 * tendremos que agregar un "delay" en el cual permite que al microcontrolador le de tiempo de mantener el cambio de estado del LED
+	 * gracias a la pulsación.
+	 */
+//	while(1){ //Descomentar para observar la función de encendido y apagado por el user button
+//
+//
+//			if (GPIO_ReadPin(&handlerUserButton2)==0){
+//				GPIOxTooglePin(&handlerUserLedPin);
+//				for(uint32_t i=0; i<160000;i++){
+//					NOP();
+//				}
+//
+//			}
+//
+//
+//	}
 
 
 	/**
 	 * Punto 4---> Configuración de LEDs controladas por el microcontrolador.
+	 */
+
+	/*
+	 * Primero definimos los pines que vamos a usar, en este caso el PIN C6 que traera un boton externo en configuración
+	 * PULLDOWN, para ello configuramos este ultimo en PULLDOWN y agregamos una fuente de voltaje externa al boton, también los
+	 * pines C10 (LED rojo), C11(LED naranja), C12 (LED verde).
 	 */
 
 	GPIO_Handler_t handlerUserButton3 = {0};
@@ -214,7 +232,12 @@ int main(void){
 
 	GPIO_Config(&handlerUserLedPin3);
 
-	BIN_IDR = GPIO_ReadPin(&handlerUserButton3);
+	/*
+	 * Luego de configurar los pines, conectamos los tres ultimos PINES a resistencias de 220 OHMS correspondiente a cada LED, y conectamos los ultimos a GND del MCU de tal forma que los pines sean configurados
+	 * con un cambio de estado en funcion de las pulsaciones que se le de al boton. El siguiente Loop infinito condiciona la pulsacion de boton, con el encendido instantaneo de los tres LEDs, posteriormente, vamos
+	 * apagando los LEDs como indica la tarea usando ciclos for como "delays".
+	 */
+
 
 	while(1){
 
