@@ -51,6 +51,8 @@ int main(void)
 	 * dias exactos.
 	 */
 	number_of_days = number_of_years*365 + 22+ 30 + 31 + 30 + 31 + 16;
+	// + 22+ 30 + 31 + 30 + 31 + 16; = 160
+
 	/**
 	 * Punto 3--> calculo del numero de horas transcurridos
 	 */
@@ -78,11 +80,15 @@ int main(void)
 	number_of_hours_bin = 0b101101110110100100;
 	//Por ultimo asignamos en el sistema hexagesimal el valor propio de numero de segundos
 	number_of_seconds_hex= 0x284cd240;
+	// Tus valores estan bien, pero no deberias hacerlo así porque estas sobreescribiendo las variables.
+	// Estos valores deberian aparecer en un comentario.
+
 	/*
 	 * El tipo de variable que adquiere cada una de las binarias y la hexagesimal es la misma definida para el caso decimal
 	 Ya que para representar el mismo numero en otra representacion debe de estar dentro del rango posible de valores que tiene
 	permitido mostrar
 	 */
+
 	/**
 	 * Punto 6--> Aplicacion de la operacion bitwise left-shift
 	 */
@@ -109,6 +115,7 @@ int main(void)
 	 * Por ultimo, ejecutamos la funcion Left-shift dos veces seguidas mas. A partir del ultimo resultado
 	 * 0b11110100100010 tendremos el siguiente resultado ---> 0b11110100100010000 que corresponde al valor decimal  positivo 125200,
 	 * 4 veces el resultado anterior en decimal.
+	 * // Es una multiplicacion...
 	 */
 
 	/**
@@ -136,6 +143,8 @@ int main(void)
 	 * Por ultimo, ejecutamos la funcion Right-shift 2 veces seguidas mas. A partir del ultimo resultado
 	 * 0b1011011101101001 tendremos el siguiente resultado ---> 0b10110111011010 que corresponde al valor decimal 11738, especificamente un cuarto del valor encontrado.
 	 */
+	// Debes tener cuiaddo con esto, en realidad estas encadenando una serie de shifts. Hasta acá hiciste 4, lo cual implica una division
+	// por 16 del valor original
 
 	/**
 	 * Punto 8 --> Operaciones logicas de adicion y NOT.
@@ -198,6 +207,7 @@ int main(void)
 	//Efectivamente logramos hacerle mascara a los valores pedidos, asi la mascara que usamos en forma hexagesimal sera la siguiente
 
 	mask_hex = 0xf000f0;
+	// Y cual es el resultado de la operacion?
 
 	/**
 	 * Punto 10 ---> Aplicacion de la funcion AND y el uso de mascaras, segunda parte.
@@ -239,5 +249,6 @@ int main(void)
 	 * Despues de muchas pruebas, vemos que la operacion lo que hace es anular a la variable sobre la que se aplica,
 	 * una segunda ejecucion hace que la variable ya anulada se convierta en un 1.
 	 */
+	// Esta operación tiene una mucho mejor explicación desde el concepto de operadores booleanos.
 
 }
