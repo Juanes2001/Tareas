@@ -1,0 +1,4 @@
+"./Src/BasicTimer.o"
+"./Src/GPIOxDriver.o"
+"./Src/syscalls.o"
+"./Src/sysmem.o"
