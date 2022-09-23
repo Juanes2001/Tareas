@@ -153,7 +153,6 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	{
 		// Actuando por defecto, desactivamos ambos canales
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
-		// Escriba acá su código
 		break;
 	}
 	}
