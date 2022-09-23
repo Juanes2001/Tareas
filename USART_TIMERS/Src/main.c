@@ -20,10 +20,15 @@
 #include "GPIOxDriver.h"
 #include "USARTxDriver.h"
 #include <stdint.h>
+#include <stdbool.h>
+void TIM2_IRQHandler(void);
 
 GPIO_Handler_t handlerUserLed = {0};
+GPIO_Handler_t handlerGPIOUSART1 = {0};
 GPIO_Handler_t handlerUserButton = {0};
 BasicTimer_Handler_t handlerTIM2 = {0};
+USART_Handler_t handlerUSART1= {0};
+
 
 int main(void)
 {
@@ -37,21 +42,55 @@ int main(void)
 
 	GPIO_Config(&handlerUserLed);
 
+	handlerUserButton.pGPIOx =GPIOC;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinNumber = PIN_13;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	handlerUserButton.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+
+	GPIO_Config(&handlerUserButton);
+
+	handlerGPIOUSART1.pGPIOx =GPIOA;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinNumber = PIN_9;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinAltFunMode = AF7;
+
+	GPIO_Config(&handlerGPIOUSART1);
+
 	handlerTIM2.ptrTIMx = TIM2;
 	handlerTIM2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerTIM2.TIMx_Config.TIMx_speed = BTIMER_SPEED_10us;
-	handlerTIM2.TIMx_Config.TIMx_period = 250;
+	handlerTIM2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	handlerTIM2.TIMx_Config.TIMx_period = 2500;
+	handlerTIM2.TIMx_Config.TIMx_interruptEnable=1;
 
 	BasicTimer_Config(&handlerTIM2);
 
-	while(1){
+	handlerUSART1.ptrUSARTx = USART1;
+	handlerUSART1.USART_Config.USART_baudrate = USART_BAUDRATE_115200;
+	handlerUSART1.USART_Config.USART_datasize = USART_DATASIZE_8BIT;
+	handlerUSART1.USART_Config.USART_mode = USART_MODE_TX;
+	handlerUSART1.USART_Config.USART_stopbits = USART_STOPBIT_1;
+
+	USART_Config(&handlerUSART1);
+
 	TIM2_IRQHandler();
+
+	while(1){
+
 	}
 
 }
 
-
 void BasicTimer2_Callback(void){
-	GPIOxTooglePin(&handlerUserLed);
+		GPIOxTooglePin(&handlerUserLed);
+		writeChar(&handlerUSART1, 45);
+		if (GPIO_ReadPin(&handlerUserButton) == 0){
+			writeChar(&handlerUSART1, 46);
+		}
 }
 
