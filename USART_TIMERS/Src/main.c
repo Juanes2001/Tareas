@@ -72,7 +72,7 @@ int main(void)
 
 	handlerUSART1.ptrUSARTx = USART1;
 	handlerUSART1.USART_Config.USART_baudrate = USART_BAUDRATE_115200;
-	handlerUSART1.USART_Config.USART_datasize = USART_DATASIZE_8BIT;
+	handlerUSART1.USART_Config.USART_datasize = USART_DATASIZE_9BIT;
 	handlerUSART1.USART_Config.USART_mode = USART_MODE_TX;
 	handlerUSART1.USART_Config.USART_stopbits = USART_STOPBIT_1;
 
@@ -88,9 +88,10 @@ int main(void)
 
 void BasicTimer2_Callback(void){
 		GPIOxTooglePin(&handlerUserLed);
-		writeChar(&handlerUSART1, 45);
 		if (GPIO_ReadPin(&handlerUserButton) == 0){
 			writeChar(&handlerUSART1, 46);
+		}else{
+			writeChar(&handlerUSART1, 45);
 		}
 }
 

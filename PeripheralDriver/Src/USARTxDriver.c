@@ -171,7 +171,7 @@ int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 		__NOP();
 	}
 
-
+	ptrUsartHandler->ptrUSARTx->DR = dataToSend;
 
 	return dataToSend;
 }
