@@ -21,17 +21,44 @@
 #include "USARTxDriver.h"
 #include <stdint.h>
 #include <stdbool.h>
-void TIM2_IRQHandler(void);
+
+
+void inSystem (void);
 
 GPIO_Handler_t handlerUserLed = {0};
 GPIO_Handler_t handlerGPIOUSART1 = {0};
 GPIO_Handler_t handlerUserButton = {0};
 BasicTimer_Handler_t handlerTIM2 = {0};
 USART_Handler_t handlerUSART1= {0};
-
+uint8_t flag1 = 0;
+uint8_t countr = 0;
+uint8_t mensaje[4] = {67, 66, 85, 77};
 
 int main(void)
 {
+
+	inSystem();
+
+	while(1){
+		if (flag1 == 1){
+
+			if (GPIO_ReadPin(&handlerUserButton) == 0){
+				writeChar(&handlerUSART1, mensaje[countr-1] );
+
+			}else{
+				writeChar(&handlerUSART1, 45);
+			}
+
+			flag1 = 0;
+		}else{
+			__NOP();
+		}
+	}
+
+}
+
+void inSystem (void){
+
 	handlerUserLed.pGPIOx =GPIOA;
 	handlerUserLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	handlerUserLed.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
@@ -78,20 +105,16 @@ int main(void)
 
 	USART_Config(&handlerUSART1);
 
-	TIM2_IRQHandler();
-
-	while(1){
-
-	}
 
 }
 
 void BasicTimer2_Callback(void){
 		GPIOxTooglePin(&handlerUserLed);
-		if (GPIO_ReadPin(&handlerUserButton) == 0){
-			writeChar(&handlerUSART1, 46);
-		}else{
-			writeChar(&handlerUSART1, 45);
+		flag1 = 1;
+		countr += 1;
+		if (countr == 5){
+			countr = 1;
 		}
+
 }
 
