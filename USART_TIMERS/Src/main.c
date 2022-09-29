@@ -118,7 +118,8 @@ void inSystem (void){
 
 	GPIO_Config(&handlerUserLed);
 	/*
-	 * Configuramos el pin de estado que sera controlado por el USER Button.
+	 * Configuramos el pin de estado que será controlado por el USER Button, en modo entrada, donde pulsado el boton , tendremos
+	 * un 0 lógico, y al no presionarlo tener un 1 lógico.
 	 */
 	handlerUserButton.pGPIOx =GPIOC;
 	handlerUserButton.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
@@ -130,6 +131,11 @@ void inSystem (void){
 
 	GPIO_Config(&handlerUserButton);
 
+	/*
+	 * En la siguiente configuraremops el PIN 9A en modo TX para usar el protocolo USART, para ello tenemos que habilitar las funciones
+	 * alternativas, donde AF/ corresponde con el modo TX de USART
+	 */
+
 	handlerGPIOUSART1.pGPIOx =GPIOA;
 	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	handlerGPIOUSART1.GPIO_PinConfig.GPIO_PinNumber = PIN_9;
@@ -140,6 +146,11 @@ void inSystem (void){
 
 	GPIO_Config(&handlerGPIOUSART1);
 
+	/*
+	 * Configuramos el Timer 2 para usar las interrupciones, el conteo se hace cada 100 micro segundos, con un periodo entre interrupciones
+	 * de 250ms,
+	 */
+
 	handlerTIM2.ptrTIMx = TIM2;
 	handlerTIM2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
 	handlerTIM2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
@@ -148,6 +159,9 @@ void inSystem (void){
 
 	BasicTimer_Config(&handlerTIM2);
 
+	/*
+	 * Configuramos el USART_1 con una velocidad de 115200 baulios, incluyendo paridad y 1 solo bit de parada.
+	 */
 	handlerUSART1.ptrUSARTx = USART1;
 	handlerUSART1.USART_Config.USART_baudrate = USART_BAUDRATE_115200;
 	handlerUSART1.USART_Config.USART_datasize = USART_DATASIZE_9BIT;
@@ -159,6 +173,10 @@ void inSystem (void){
 
 }
 
+/*
+ * Definimos la funcion del callback para el timer 2, cuando se ejecuta la funcion BasicTimer_Config, el timer y las interrupciones empiezan
+ * a ejecutarse, cada interrupcion llamara al callback para asi hacer el blinky y activar la bandera.
+ */
 void BasicTimer2_Callback(void){
 		GPIOxTooglePin(&handlerUserLed);
 		flag1 = 1;
