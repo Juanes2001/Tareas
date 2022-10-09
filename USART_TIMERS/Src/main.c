@@ -26,6 +26,7 @@ GPIO_Handler_t handlerUserButton = {0};
 BasicTimer_Handler_t handlerTIM2 = {0};
 USART_Handler_t handlerUSART1= {0};
 
+
 /*
  * Creamos 2 variables, una bandera que nos ayudará a usar las interrupciones, y un contador
  * que almacenará los caracteres del codigo ASCII a partir del 32 en adelante, ya que los numeros

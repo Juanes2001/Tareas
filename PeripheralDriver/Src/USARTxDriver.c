@@ -14,11 +14,17 @@
  * del periferico que se está utilizando.
  */
 void USART_Config(USART_Handler_t *ptrUsartHandler){
+
+	__disable_irq();
+
 	/* 1. Activamos la señal de reloj que viene desde el BUS al que pertenece el periferico */
 	/* Lo debemos hacer para cada uno de las posibles opciones que tengamos (USART1, USART2, USART6) */
     /* 1.1 Configuramos el USART1 */
 	if(ptrUsartHandler->ptrUSARTx == USART1){
 		RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+	}
+	else if(ptrUsartHandler->ptrUSARTx == USART2){
+		RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
 	}
 	
     /* 1.2 Configuramos el USART6 */
@@ -163,6 +169,31 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 	}else{
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_UE;
 	}
+
+	//Habilitamos las interrupciones de recepcion RXNEIE
+	if (ptrUsartHandler->USART_Config.USART_enableInRx == USART_INTERRUPT_RX_ENABLE){
+		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_RXNEIE;
+
+		if(ptrUsartHandler->ptrUSARTx == USART1){
+					// Activando en NVIC para la interrupción del USART1
+					__NVIC_EnableIRQ(USART1_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART2){
+					// Activando en NVIC para la interrupción del USART2
+					__NVIC_EnableIRQ(USART2_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART6){
+				// Activando en NVIC para la interrupción del USART6
+					__NVIC_EnableIRQ(USART6_IRQn);
+		}
+		else{
+				__NOP();
+		}
+	}else{
+		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_RXNEIE;
+	}
+
+	__enable_irq();
 }
 
 /* funcion para escribir un solo char */
@@ -174,4 +205,53 @@ int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend ){
 	ptrUsartHandler->ptrUSARTx->DR = dataToSend;
 
 	return dataToSend;
+}
+
+
+void writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend){
+
+	while(*msgToSend != '\0'){
+		writeChar(ptrUsartHandler, *msgToSend);
+		msgToSend ++ ;
+	}
+}
+
+__attribute__((weak))	void usart2Rx_Callback(void){
+	__NOP();
+}
+__attribute__((weak))	void usart1Rx_Callback(void){
+	__NOP();
+}
+__attribute__((weak))	void usart6Rx_Callback(void){
+	__NOP();
+}
+
+uint8_t auxRxData = 0;
+
+uint8_t getRxData(void){
+	return auxRxData;
+}
+
+void USART2_IRQHandler(void){
+
+	if(USART2->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART2->DR;
+		usart2Rx_Callback();
+	}
+}
+
+void USART1_IRQHandler(void){
+
+	if(USART1->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART1->DR;
+		usart1Rx_Callback();
+	}
+}
+
+void USART6_IRQHandler(void){
+
+	if(USART6->SR & USART_SR_RXNE){
+		auxRxData = (uint8_t) USART6->DR;
+		usart6Rx_Callback();
+	}
 }
