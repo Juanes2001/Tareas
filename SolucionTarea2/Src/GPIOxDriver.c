@@ -175,6 +175,7 @@ uint32_t GPIO_ReadPin (GPIO_Handler_t *pPinHandler){
 	pinValue = (pPinHandler -> pGPIOx -> IDR);
 	pinValue &= mask;
 	pinValue >>= (pPinHandler->GPIO_PinConfig.GPIO_PinNumber);
+	// OK
 
 	return pinValue;
 }
