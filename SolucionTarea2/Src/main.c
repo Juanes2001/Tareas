@@ -115,6 +115,7 @@ int main(void){
 		 */
 
 	}
+	// Esta función NO debería ser creaad dentro de otra función.
 
 	for (uint8_t i=0; i<6; i++){
 
