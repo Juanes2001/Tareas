@@ -13,8 +13,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-uint8_t flag1 = 0;
-uint8_t flag2 = 0;
+uint8_t clk = 0;
+uint8_t data = 0;
 char buffer[64];
 uint8_t counter = 0;
 
@@ -42,19 +42,30 @@ int main (void){
 
 	while(1){
 
-		if (flag1 == 1 && flag2 == 0){
-
+		if (clk == 1 && data == 0){
 			counter++;
-			sprintf(buffer, "CW direction = %u \n", counter);
-			writeMsg(&handlerUSART2, buffer);
-			flag1=0;
+			if (counter <= 50 && counter>=0){
+				sprintf(buffer, "CW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer);
+			}else{
+				counter = 0;
+				sprintf(buffer, "CW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer);
+			}
+			clk = 0;
 
-		}else if (flag1 == 1 && flag2 == 1){
+		}else if (clk == 1 && data == 1){
 			counter--;
-			sprintf(buffer, "CCW direction = %u \n", counter);
-			writeMsg(&handlerUSART2, buffer);
-			flag1 = 0;
-			flag2 = 0;
+			if (counter <= 50 && counter>=0){
+				sprintf(buffer, "CCW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer);
+			}else{
+				counter = 50;
+				sprintf(buffer, "CCW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer);
+			}
+			clk = 0;
+			data = 0;
 		}else{
 			__NOP();
 		}
@@ -80,7 +91,6 @@ void inSystem (void){
 	GPIO_Config(&handlerBlinkyLed);
 
 
-
 	handlerExIn0.pGPIOx 							= GPIOA;
 	handlerExIn0.GPIO_PinConfig.GPIO_PinNumber      = PIN_0;
 	handlerExIn0.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
@@ -104,11 +114,8 @@ void inSystem (void){
 	handlerExIn1.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
 	handlerExIn1.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 
+	GPIO_Config(&handlerExIn1);
 
-	handlerExtiConfig1.pGPIOHandler                 = &handlerExIn1;
-	handlerExtiConfig1.edgeType                     = EXTERNAL_INTERRUPT_RISING_EDGE;
-
-	extInt_Config(&handlerExtiConfig1);
 
 	handlerTIM2.ptrTIMx = TIM2;
 	handlerTIM2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
@@ -139,15 +146,11 @@ void inSystem (void){
 
 	USART_Config(&handlerUSART2);
 
-
-
-
-
 }
 
 void callback_extInt0(void){
-		flag1 = 1;
-		flag2 = GPIO_ReadPin(&handlerExIn1);
+		clk = 1;
+		data = GPIO_ReadPin(&handlerExIn1);
 
 }
 
