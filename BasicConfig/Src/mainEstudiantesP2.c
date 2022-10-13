@@ -108,9 +108,9 @@ int main(void) {
 void InitSystem(void){
 
 	// Configurando el pin para el Led_Blinky
-	handlerStateLed.pGPIOx 							= GPIOA;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinNumber	= PIN_5;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinMode		= GPIO_MODE_OUT;
+	handlerStateLed.pGPIOx 								= GPIOA;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinNumber		= PIN_5;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
 	handlerStateLed.GPIO_PinConfig.GPIO_PinOPType		= GPIO_OTYPE_PUSHPULL;
 	handlerStateLed.GPIO_PinConfig.GPIO_PinSpeed		= GPIO_OSPEEDR_FAST;
 	handlerStateLed.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
