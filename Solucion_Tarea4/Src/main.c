@@ -9,14 +9,14 @@
 #include "BasicTimer.h"
 #include "GPIOxDriver.h"
 #include "USARTxDriver.h"
-#include"EXTIDriver.h"
+#include "EXTIDriver.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 uint8_t flag1 = 0;
 uint8_t flag2 = 0;
 char buffer[64];
-uint16_t counter = 0;
+uint8_t counter = 0;
 
 
 void inSystem (void);
@@ -25,7 +25,8 @@ void inSystem (void);
 GPIO_Handler_t handlerBlinkyLed = {0};
 GPIO_Handler_t handlerButtonPin = {0};
 GPIO_Handler_t handlerExIn0 = {0};
-GPIO_Handler_t handlerExIn1 ={0};
+GPIO_Handler_t handlerExIn1 = {0};
+GPIO_Handler_t handlerPinTx = {0};
 EXTI_Config_t handlerExtiConfig0 = {0};
 EXTI_Config_t handlerExtiConfig1 = {0};
 EXTI_Config_t handlerExtiConfig2 = {0};
@@ -41,29 +42,24 @@ int main (void){
 
 	while(1){
 
-		if (flag1 == SET){
+		if (flag1 == 1 && flag2 == 0){
 
 			counter++;
 			sprintf(buffer, "CW direction = %u \n", counter);
 			writeMsg(&handlerUSART2, buffer);
-			flag1 = 0;
+			flag1=0;
 
-
-		}else if (flag2 == SET){
-			counter++;
+		}else if (flag1 == 1 && flag2 == 1){
+			counter--;
 			sprintf(buffer, "CCW direction = %u \n", counter);
 			writeMsg(&handlerUSART2, buffer);
+			flag1 = 0;
 			flag2 = 0;
 		}else{
 			__NOP();
 		}
 
-		if (GPIO_ReadPin(&handlerButtonPin)==0){
-			writeChar(&handlerUSART2, 'a');
 
-		}else{
-			__NOP();
-		}
 
 
 
@@ -83,16 +79,7 @@ void inSystem (void){
 
 	GPIO_Config(&handlerBlinkyLed);
 
-	handlerButtonPin.pGPIOx = GPIOB;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinNumber = PIN_13;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_PULLUP;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 
-
-	GPIO_Config(&handlerButtonPin);
 
 	handlerExIn0.pGPIOx 							= GPIOA;
 	handlerExIn0.GPIO_PinConfig.GPIO_PinNumber      = PIN_0;
@@ -104,7 +91,7 @@ void inSystem (void){
 
 
 	handlerExtiConfig0.pGPIOHandler 		= &handlerExIn0;
-	handlerExtiConfig0.edgeType 			= EXTERNAL_INTERRUPT_FALLING_EDGE;
+	handlerExtiConfig0.edgeType 			= EXTERNAL_INTERRUPT_RISING_EDGE;
 
 	extInt_Config(&handlerExtiConfig0);
 
@@ -119,9 +106,9 @@ void inSystem (void){
 
 
 	handlerExtiConfig1.pGPIOHandler                 = &handlerExIn1;
-	handlerExtiConfig1.edgeType                     = EXTERNAL_INTERRUPT_FALLING_EDGE;
+	handlerExtiConfig1.edgeType                     = EXTERNAL_INTERRUPT_RISING_EDGE;
 
-	extInt_Config(&handlerExtiConfig0);
+	extInt_Config(&handlerExtiConfig1);
 
 	handlerTIM2.ptrTIMx = TIM2;
 	handlerTIM2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
@@ -132,6 +119,15 @@ void inSystem (void){
 	BasicTimer_Config(&handlerTIM2);
 
 	startTimer (&handlerTIM2);
+
+	handlerPinTx.pGPIOx 							= GPIOA;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinNumber		= PIN_2;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinMode		= GPIO_MODE_ALTFN;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinOPType		= GPIO_OTYPE_PUSHPULL;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinSpeed		= GPIO_OSPEEDR_FAST;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode	= AF7;
+	GPIO_Config(&handlerPinTx);
 
 	handlerUSART2.ptrUSARTx = USART2;
 	handlerUSART2.USART_Config.USART_baudrate = USART_BAUDRATE_115200;
@@ -150,12 +146,11 @@ void inSystem (void){
 }
 
 void callback_extInt0(void){
-	flag1 = 1;
+		flag1 = 1;
+		flag2 = GPIO_ReadPin(&handlerExIn1);
+
 }
 
-void callback_extInt1(void){
-	flag2 = 1;
-}
 
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerBlinkyLed);

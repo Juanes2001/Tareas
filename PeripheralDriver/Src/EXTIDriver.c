@@ -470,15 +470,11 @@ void extInt_Config(EXTI_Config_t *extiConfig){
 	if(extiConfig->edgeType == EXTERNAL_INTERRUPT_FALLING_EDGE){
 		/* Falling Trigger selection register*/
 		EXTI->FTSR |= (0x1 << extiConfig->pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
-		//Limpiamos el Rising trigger para el mismo EXTI,
-		EXTI->RTSR &= ~(0x1 << extiConfig->pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
 
 
 	}
 	else{
 		EXTI->RTSR |= (0x1 << extiConfig->pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
-		//Limpiamos el Falling trigger para el mismo EXTI,
-		EXTI->FTSR &= ~(0x1 << extiConfig->pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
 	}
 
 	/* 5.0 Desactivo primero las interrupciones globales */
