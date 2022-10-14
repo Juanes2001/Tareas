@@ -22,19 +22,31 @@ uint8_t counter = 0;
 void inSystem (void);
 
 
-GPIO_Handler_t handlerBlinkyLed = {0};
-GPIO_Handler_t handlerButtonPin = {0};
-GPIO_Handler_t handlerExIn0 = {0};
-GPIO_Handler_t handlerExIn1 = {0};
-GPIO_Handler_t handlerPinTx = {0};
-EXTI_Config_t handlerExtiConfig0 = {0};
-EXTI_Config_t handlerExtiConfig1 = {0};
-EXTI_Config_t handlerExtiConfig2 = {0};
-BasicTimer_Handler_t handlerTIM2 = {0};
-USART_Handler_t handlerUSART2 = {0};
+GPIO_Handler_t handlerBlinkyLed        = {0}; //. PA5
+BasicTimer_Handler_t handlerTIM2       = {0}; //.
+
+GPIO_Handler_t handlerExInButtonPin    = {0};
+EXTI_Config_t handlerExtiConfig1       = {0}; //.
+
+GPIO_Handler_t handlerExInClock        = {0}; //. PA0
+GPIO_Handler_t handlerExInData         = {0}; //. PA1
+EXTI_Config_t handlerExtiConfig0       = {0}; //.
+
+GPIO_Handler_t handlerPinTx            = {0}; //. PA2
+USART_Handler_t handlerUSART2          = {0}; //.
+
+GPIO_Handler_t handlerPinTran1         = {0}; //.PA6
+GPIO_Handler_t handlerPinTran2         = {0}; //.PA7
+BasicTimer_Handler_t handlerTIM5       = {0};
 
 
-
+GPIO_Handler_t handlerPinSeg1         = {0};
+GPIO_Handler_t handlerPinSeg2         = {0};
+GPIO_Handler_t handlerPinSeg3         = {0};
+GPIO_Handler_t handlerPinSeg4         = {0};
+GPIO_Handler_t handlerPinSeg5         = {0};
+GPIO_Handler_t handlerPinSeg6         = {0};
+GPIO_Handler_t handlerPinSeg7         = {0};
 
 int main (void){
 
@@ -87,45 +99,38 @@ void inSystem (void){
 	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
 	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
 	handlerBlinkyLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-
 	GPIO_Config(&handlerBlinkyLed);
-
-
-	handlerExIn0.pGPIOx 							= GPIOA;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinNumber      = PIN_0;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerExIn0.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
-
-
-	handlerExtiConfig0.pGPIOHandler 		= &handlerExIn0;
-	handlerExtiConfig0.edgeType 			= EXTERNAL_INTERRUPT_RISING_EDGE;
-
-	extInt_Config(&handlerExtiConfig0);
-
-
-	handlerExIn1.pGPIOx 							= GPIOA;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerExIn1.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
-
-	GPIO_Config(&handlerExIn1);
-
 
 	handlerTIM2.ptrTIMx = TIM2;
 	handlerTIM2.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
 	handlerTIM2.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	handlerTIM2.TIMx_Config.TIMx_period = 2500;
 	handlerTIM2.TIMx_Config.TIMx_interruptEnable = 1;
-
 	BasicTimer_Config(&handlerTIM2);
 
 	startTimer (&handlerTIM2);
+
+
+	handlerExInClock.pGPIOx 							= GPIOA;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinNumber      = PIN_0;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerExInClock.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	handlerExtiConfig0.pGPIOHandler 		= &handlerExInClock;
+	handlerExtiConfig0.edgeType 			= EXTERNAL_INTERRUPT_RISING_EDGE;
+	extInt_Config(&handlerExtiConfig0);
+
+
+	handlerExInData.pGPIOx 							= GPIOA;
+	handlerExInData.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
+	handlerExInData.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	handlerExInData.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
+	handlerExInData.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
+	handlerExInData.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerExInData.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerExInData);
 
 	handlerPinTx.pGPIOx 							= GPIOA;
 	handlerPinTx.GPIO_PinConfig.GPIO_PinNumber		= PIN_2;
@@ -143,18 +148,121 @@ void inSystem (void){
 	handlerUSART2.USART_Config.USART_stopbits = USART_STOPBIT_1;
 	handlerUSART2.USART_Config.USART_parity = USART_PARITY_NONE;
 	handlerUSART2.USART_Config.USART_enableInRx = USART_INTERRUPT_RX_DISABLE;
-
 	USART_Config(&handlerUSART2);
 
+
+	handlerPinTran1.pGPIOx                              = GPIOA;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinNumber       = PIN_6;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinTran1);
+	GPIO_WritePin(&handlerPinTran1, RESET);
+
+	handlerPinTran1.pGPIOx                              = GPIOA;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinNumber       = PIN_7;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinTran1.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinTran2);
+	GPIO_WritePin(&handlerPinTran2, SET);
+
+	handlerTIM5.ptrTIMx = TIM5;
+	handlerTIM5.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerTIM5.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	handlerTIM5.TIMx_Config.TIMx_period = 2500;
+	handlerTIM5.TIMx_Config.TIMx_interruptEnable = 1;
+	BasicTimer_Config(&handlerTIM5);
+
+	startTimer (&handlerTIM5);
+
+	handlerPinSeg1.pGPIOx                              = GPIOC;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinNumber       = PIN_1;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg1.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg1);
+	GPIO_WritePin(&handlerPinSeg1, RESET);
+
+	handlerPinSeg2.pGPIOx                              = GPIOC;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinNumber       = PIN_2;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg2.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg2);
+	GPIO_WritePin(&handlerPinSeg2, RESET);
+
+	handlerPinSeg3.pGPIOx                              = GPIOC;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinNumber       = PIN_4;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg3);
+	GPIO_WritePin(&handlerPinSeg3, RESET);
+
+	handlerPinSeg4.pGPIOx                              = GPIOC;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinNumber       = PIN_4;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg4.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg4);
+	GPIO_WritePin(&handlerPinSeg4, RESET);
+
+	handlerPinSeg5.pGPIOx                              = GPIOC;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinNumber       = PIN_5;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg5.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg5);
+	GPIO_WritePin(&handlerPinSeg5, RESET);
+
+	handlerPinSeg6.pGPIOx                              = GPIOC;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinNumber       = PIN_6;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg6.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg6);
+	GPIO_WritePin(&handlerPinSeg6, RESET);
+
+	handlerPinSeg7.pGPIOx                              = GPIOC;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinNumber       = PIN_7;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinSeg7.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinSeg7);
+	GPIO_WritePin(&handlerPinSeg7, RESET);
 }
 
 void callback_extInt0(void){
 		clk = 1;
-		data = GPIO_ReadPin(&handlerExIn1);
+		data = GPIO_ReadPin(&handlerExInData);
 
 }
 
 
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerBlinkyLed);
+}
+
+void BasicTimer5_Callback(void){
+	GPIOxTooglePin(&handlerPinTran1);
+	GPIOxTooglePin(&handlerPinTran2);
 }
