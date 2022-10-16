@@ -15,8 +15,10 @@
 
 uint8_t clk = 0;
 uint8_t data = 0;
-char buffer[64];
+char buffer1[64];
+char buffer2[200];
 uint8_t counter = 0;
+uint8_t msgButton = 0;
 
 
 void inSystem (void);
@@ -25,7 +27,7 @@ void inSystem (void);
 GPIO_Handler_t handlerBlinkyLed        = {0}; //. PA5
 BasicTimer_Handler_t handlerTIM2       = {0}; //.
 
-GPIO_Handler_t handlerExInButtonPin    = {0};
+GPIO_Handler_t handlerExInButtonPin    = {0}; //. PA3
 EXTI_Config_t handlerExtiConfig1       = {0}; //.
 
 GPIO_Handler_t handlerExInClock        = {0}; //. PA0
@@ -40,46 +42,55 @@ GPIO_Handler_t handlerPinTran2         = {0}; //.PA7
 BasicTimer_Handler_t handlerTIM5       = {0};
 
 
-GPIO_Handler_t handlerPinSeg1         = {0};
-GPIO_Handler_t handlerPinSeg2         = {0};
-GPIO_Handler_t handlerPinSeg3         = {0};
-GPIO_Handler_t handlerPinSeg4         = {0};
-GPIO_Handler_t handlerPinSeg5         = {0};
-GPIO_Handler_t handlerPinSeg6         = {0};
-GPIO_Handler_t handlerPinSeg7         = {0};
+GPIO_Handler_t handlerPinSeg1         = {0}; //.PC1
+GPIO_Handler_t handlerPinSeg2         = {0}; //.PC2
+GPIO_Handler_t handlerPinSeg3         = {0}; //.PC3
+GPIO_Handler_t handlerPinSeg4         = {0}; //.PC4
+GPIO_Handler_t handlerPinSeg5         = {0}; //.PC5
+GPIO_Handler_t handlerPinSeg6         = {0}; //.PC6
+GPIO_Handler_t handlerPinSeg7         = {0}; //.PC7
 
 int main (void){
 
 	inSystem();
+
 
 	while(1){
 
 		if (clk == 1 && data == 0){
 			counter++;
 			if (counter <= 50 && counter>=0){
-				sprintf(buffer, "CW direction = %u \n", counter);
-				writeMsg(&handlerUSART2, buffer);
+				sprintf(buffer1, "CW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer1);
 			}else{
 				counter = 0;
-				sprintf(buffer, "CW direction = %u \n", counter);
-				writeMsg(&handlerUSART2, buffer);
+				sprintf(buffer1, "CW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer1);
 			}
 			clk = 0;
 
 		}else if (clk == 1 && data == 1){
 			counter--;
 			if (counter <= 50 && counter>=0){
-				sprintf(buffer, "CCW direction = %u \n", counter);
-				writeMsg(&handlerUSART2, buffer);
+				sprintf(buffer1, "CCW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer1);
 			}else{
 				counter = 50;
-				sprintf(buffer, "CCW direction = %u \n", counter);
-				writeMsg(&handlerUSART2, buffer);
+				sprintf(buffer1, "CCW direction = %u \n", counter);
+				writeMsg(&handlerUSART2, buffer1);
 			}
 			clk = 0;
 			data = 0;
 		}else{
 			__NOP();
+		}
+
+		if (msgButton == 1){
+			char buffer2[200] = "PORQUE LA NOTA YA ESTA HACIENDO EFECTOOO \r MI MUNDO ESTA AL DIA Y ME SIENTO PERFECTO"
+					" \r PORQUE ESTAS TU ASI MOVIENDOTE ASI NO PARE \r 	BBY TU ERE MI DROGA ESTA NOCHE NO LE BAJE \r";
+			writeMsg(&handlerUSART2, buffer2);
+			msgButton = 0;
+
 		}
 
 
@@ -123,11 +134,11 @@ void inSystem (void){
 	extInt_Config(&handlerExtiConfig0);
 
 
-	handlerExInData.pGPIOx 							= GPIOA;
+	handlerExInData.pGPIOx 							   = GPIOA;
 	handlerExInData.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
 	handlerExInData.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
 	handlerExInData.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
-	handlerExInData.GPIO_PinConfig.GPIO_PinPuPdControl =  GPIO_PUPDR_NOTHING;
+	handlerExInData.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerExInData.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
 	handlerExInData.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerExInData);
@@ -161,20 +172,20 @@ void inSystem (void){
 	GPIO_Config(&handlerPinTran1);
 	GPIO_WritePin(&handlerPinTran1, RESET);
 
-	handlerPinTran1.pGPIOx                              = GPIOA;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinNumber       = PIN_7;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
-	handlerPinTran1.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
+	handlerPinTran2.pGPIOx                              = GPIOA;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinNumber       = PIN_7;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinPuPdControl  = GPIO_PUPDR_NOTHING;
+	handlerPinTran2.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinTran2);
 	GPIO_WritePin(&handlerPinTran2, SET);
 
 	handlerTIM5.ptrTIMx = TIM5;
 	handlerTIM5.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
 	handlerTIM5.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
-	handlerTIM5.TIMx_Config.TIMx_period = 2500;
+	handlerTIM5.TIMx_Config.TIMx_period = 30;
 	handlerTIM5.TIMx_Config.TIMx_interruptEnable = 1;
 	BasicTimer_Config(&handlerTIM5);
 
@@ -201,7 +212,7 @@ void inSystem (void){
 	GPIO_WritePin(&handlerPinSeg2, RESET);
 
 	handlerPinSeg3.pGPIOx                              = GPIOC;
-	handlerPinSeg3.GPIO_PinConfig.GPIO_PinNumber       = PIN_4;
+	handlerPinSeg3.GPIO_PinConfig.GPIO_PinNumber       = PIN_3;
 	handlerPinSeg3.GPIO_PinConfig.GPIO_PinAltFunMode   = AF0;
 	handlerPinSeg3.GPIO_PinConfig.GPIO_PinMode         = GPIO_MODE_OUT;
 	handlerPinSeg3.GPIO_PinConfig.GPIO_PinOPType       =  GPIO_OTYPE_PUSHPULL;
@@ -249,11 +260,28 @@ void inSystem (void){
 	handlerPinSeg7.GPIO_PinConfig.GPIO_PinSpeed 		= GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinSeg7);
 	GPIO_WritePin(&handlerPinSeg7, RESET);
+
+	handlerExInButtonPin.pGPIOx = GPIOB;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IN;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinNumber = PIN_1;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLDOWN;
+	handlerExInButtonPin.GPIO_PinConfig.GPIO_PinSpeed =  GPIO_OSPEEDR_MEDIUM;
+	handlerExtiConfig1.pGPIOHandler = &handlerExInButtonPin;
+	handlerExtiConfig1.edgeType = EXTERNAL_INTERRUPT_RISING_EDGE;
+	extInt_Config(&handlerExtiConfig1);
+
 }
 
 void callback_extInt0(void){
 		clk = 1;
 		data = GPIO_ReadPin(&handlerExInData);
+
+}
+
+void callback_extInt1(void){
+		msgButton = 1;
 
 }
 
