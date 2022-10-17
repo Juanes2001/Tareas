@@ -1179,9 +1179,9 @@ int main (void){
 
 
 					GPIO_WritePin(&handlerPinSeg1, RESET);
-					GPIO_WritePin(&handlerPinSeg2, RESET);
-					GPIO_WritePin(&handlerPinSeg3, SET);
-					GPIO_WritePin(&handlerPinSeg4, SET);
+					GPIO_WritePin(&handlerPinSeg2, SET);
+					GPIO_WritePin(&handlerPinSeg3, RESET);
+					GPIO_WritePin(&handlerPinSeg4, RESET);
 					GPIO_WritePin(&handlerPinSeg5, SET);
 					GPIO_WritePin(&handlerPinSeg6, SET);
 					GPIO_WritePin(&handlerPinSeg7, RESET);
