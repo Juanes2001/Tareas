@@ -5,7 +5,7 @@
  *      Author: namontoy
  */
 
-#include "ExtiDriver.h"
+#include "EXTIDriver.h"
 #include "GPIOxDriver.h"
 GPIO_Handler_t handlerSimplePin = {0};
 

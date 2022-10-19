@@ -81,6 +81,7 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 		/* 3b. Configuramos el Auto-reload. Este es el "limite" hasta donde el CNT va a contar
 		 * En modo descendente, con numero positivos, cual es el minimi valor al que ARR puede llegar*/
 		/* Escriba codigo aca */
+		ptrBTimerHandler->ptrTIMx->ARR = ptrBTimerHandler->TIMx_Config.TIMx_period - 1;
 
 		/* 3c. Reiniciamos el registro counter
 		 * Este es el valor con el que el counter comienza */
