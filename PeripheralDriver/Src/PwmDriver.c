@@ -121,11 +121,31 @@ void enableOutput(PWM_Handler_t *ptrPwmHandler) {
 	switch (ptrPwmHandler->config.channel) {
 	case PWM_CHANNEL_1: {
 		// Activamos la salida del canal 1
+		ptrPwmHandler->ptrTIMx->CCER |= TIM_CCER_CC1E;
 
 		break;
 	}
 
-	/* agregue acá su código para los otros tres casos */
+	case PWM_CHANNEL_2: {
+		// Activamos la salida del canal 2
+		ptrPwmHandler->ptrTIMx->CCER |= TIM_CCER_CC2E;
+
+		break;
+	}
+
+	case PWM_CHANNEL_3: {
+		// Activamos la salida del canal 3
+		ptrPwmHandler->ptrTIMx->CCER |= TIM_CCER_CC3E;
+
+		break;
+	}
+
+	case PWM_CHANNEL_4: {
+		// Activamos la salida del canal 4
+		ptrPwmHandler->ptrTIMx->CCER |= TIM_CCER_CC4E;
+
+		break;
+	}
 
 	default: {
 		break;
