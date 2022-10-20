@@ -1974,4 +1974,6 @@ void BasicTimer2_Callback(void){
 void BasicTimer5_Callback(void){
 	GPIOxTooglePin(&handlerPinTran1);
 	GPIOxTooglePin(&handlerPinTran2);
+	// Este es un pequeño error, al hacerlo así se genera un pequeño fantasma en los numeros que se presentan
+	// La idea es que debes apagar los display, cambiar el numero y volver a enceder.
 }
