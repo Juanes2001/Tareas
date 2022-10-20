@@ -35,7 +35,6 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	/* 2a. Estamos en UP_Mode, el limite se carga en ARR y se comienza en 0 */
 	ptrPwmHandler->ptrTIMx->CR1 &= ~TIM_CR1_DIR;
 
-	ptrPwmHandler->ptrTIMx->ARR = ptrPwmHandler->config.periodo;
 
 	ptrPwmHandler->ptrTIMx->CNT = 0;
 
@@ -162,21 +161,21 @@ void setFrequency(PWM_Handler_t *ptrPwmHandler){
 
 	// Cargamos el valor del prescaler, nos define la velocidad (en ns) a la cual
 	// se incrementa el Timer
-	/* agregue acá su código */
+	ptrPwmHandler->ptrTIMx->PSC = ptrPwmHandler->config.prescaler;
 
 	// Cargamos el valor del ARR, el cual es el límite de incrementos del Timer
 	// antes de hacer un update y reload.
-	/* agregue acá su código */
+	ptrPwmHandler->ptrTIMx->ARR = ptrPwmHandler->config.periodo;
 }
 
 
 /* Función para actualizar la frecuencia, funciona de la mano con setFrequency */
 void updateFrequency(PWM_Handler_t *ptrPwmHandler, uint16_t newFreq){
 	// Actualizamos el registro que manipula el periodo
-    /* agregue acá su código */
+    ptrPwmHandler->ptrTIMx->ARR = newFreq;
 
 	// Llamamos a la fucnión que cambia la frecuencia
-	/* agregue acá su código */
+	setFrequency(ptrPwmHandler);
 }
 
 /* El valor del dutty debe estar dado en valores de %, entre 0% y 100%*/
@@ -190,7 +189,23 @@ void setDuttyCycle(PWM_Handler_t *ptrPwmHandler){
 		break;
 	}
 
-	/* agregue acá su código con los otros tres casos */
+	case PWM_CHANNEL_2:{
+		ptrPwmHandler->ptrTIMx->CCR2 = ptrPwmHandler->config.duttyCicle;
+
+		break;
+	}
+
+	case PWM_CHANNEL_3:{
+		ptrPwmHandler->ptrTIMx->CCR3 = ptrPwmHandler->config.duttyCicle;
+
+		break;
+	}
+
+	case PWM_CHANNEL_4:{
+		ptrPwmHandler->ptrTIMx->CCR4 = ptrPwmHandler->config.duttyCicle;
+
+		break;
+	}
 
 	default:{
 		break;
@@ -204,10 +219,10 @@ void setDuttyCycle(PWM_Handler_t *ptrPwmHandler){
 /* Función para actualizar el Dutty, funciona de la mano con setDuttyCycle */
 void updateDuttyCycle(PWM_Handler_t *ptrPwmHandler, uint16_t newDutty){
 	// Actualizamos el registro que manipula el dutty
-    /* agregue acá su código */
+    ptrPwmHandler->config.duttyCicle = newDutty;
 
 	// Llamamos a la fucnión que cambia el dutty y cargamos el nuevo valor
-	/* agregue acá su código */
+    setDuttyCycle(ptrPwmHandler);
 }
 
 
