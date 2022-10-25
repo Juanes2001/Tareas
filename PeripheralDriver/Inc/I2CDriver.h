@@ -29,7 +29,7 @@
 
 typedef struct
 {
-	I2C_TypeDef   *ptrI2C;
+	I2C_TypeDef   *ptrI2Cx;
 	uint8_t       slaveAddress;
 	uint8_t		  modeI2C;
 	uint8_t       dataI2C;
