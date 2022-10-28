@@ -55,7 +55,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC1PE;
-
+		enableOutput(ptrPwmHandler);
 		break;
 	}
 
@@ -68,6 +68,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2PE;
+		enableOutput(ptrPwmHandler);
 		break;
 	}
 
@@ -80,6 +81,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3PE;
+		enableOutput(ptrPwmHandler);
 		break;
 	}
 	case PWM_CHANNEL_4:{
@@ -91,6 +93,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4PE;
+		enableOutput(ptrPwmHandler);
 		break;
 	}
 
@@ -99,9 +102,9 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	}
 
 	/* 6. Activamos la salida seleccionada */
-	enableOutput(ptrPwmHandler);
 
 	}// fin del switch-case
+
 }
 
 /* Función para activar el Timer y activar todo el módulo PWM */
@@ -184,26 +187,29 @@ void setDuttyCycle(PWM_Handler_t *ptrPwmHandler){
 	// Seleccionamos el canal para configurar su dutty
 	switch(ptrPwmHandler->config.channel){
 	case PWM_CHANNEL_1:{
-		ptrPwmHandler->ptrTIMx->CCR1 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR1 = (ptrPwmHandler->config.duttyCicle/100) *
+				ptrPwmHandler->config.periodo;
 
 		break;
 	}
 
 	case PWM_CHANNEL_2:{
-		ptrPwmHandler->ptrTIMx->CCR2 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR2 = (ptrPwmHandler->config.duttyCicle/100) *
+				ptrPwmHandler->config.periodo;
 
 		break;
 	}
 
 	case PWM_CHANNEL_3:{
-		ptrPwmHandler->ptrTIMx->CCR3 = ptrPwmHandler->config.duttyCicle;
+		ptrPwmHandler->ptrTIMx->CCR3 = (ptrPwmHandler->config.duttyCicle/100) *
+				ptrPwmHandler->config.periodo;
 
 		break;
 	}
 
 	case PWM_CHANNEL_4:{
-		ptrPwmHandler->ptrTIMx->CCR4 = ptrPwmHandler->config.duttyCicle;
-
+		ptrPwmHandler->ptrTIMx->CCR4 = (ptrPwmHandler->config.duttyCicle/100) *
+				ptrPwmHandler->config.periodo;
 		break;
 	}
 
