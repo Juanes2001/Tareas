@@ -20,7 +20,8 @@
 #include "AdcDriver.h"
 #include "USARTxDriver.h"
 #include "PwmDriver.h"
-
+#include "I2CDriver.h"
+#include "EXTIDriver.h"
 
 
 // Definicion de los handlers necesarios

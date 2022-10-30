@@ -35,6 +35,9 @@
 #define USART_INTERRUPT_RX_DISABLE  0
 #define USART_INTERRUPT_RX_ENABLE   1
 
+#define USART_INTERRUPT_TX_DISABLE  0
+#define USART_INTERRUPT_TX_ENABLE   1
+
 /* Estructura para la configuración de la comunicacion:
  * Velocidad (baudrate)
  * Tamaño de los datos
@@ -43,6 +46,7 @@
  */
 typedef struct
 {
+	uint8_t USART_enableInTx;
 	uint8_t USART_enableInRx;
 	uint8_t USART_mode;
 	uint8_t USART_baudrate;

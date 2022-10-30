@@ -193,6 +193,29 @@ void USART_Config(USART_Handler_t *ptrUsartHandler){
 		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_RXNEIE;
 	}
 
+	//Habilitamos las interrupciones de  Transmisión
+	if (ptrUsartHandler->USART_Config.USART_enableInTx == USART_INTERRUPT_TX_ENABLE){
+		ptrUsartHandler->ptrUSARTx->CR1 |= USART_CR1_TXEIE;;
+
+		if(ptrUsartHandler->ptrUSARTx == USART1){
+					// Activando en NVIC para la interrupción del USART1
+					__NVIC_EnableIRQ(USART1_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART2){
+					// Activando en NVIC para la interrupción del USART2
+					__NVIC_EnableIRQ(USART2_IRQn);
+		}
+		else if(ptrUsartHandler->ptrUSARTx == USART6){
+				// Activando en NVIC para la interrupción del USART6
+					__NVIC_EnableIRQ(USART6_IRQn);
+		}
+		else{
+				__NOP();
+		}
+	}else{
+		ptrUsartHandler->ptrUSARTx->CR1 &= ~USART_CR1_TXEIE;
+	}
+
 	__enable_irq();
 }
 

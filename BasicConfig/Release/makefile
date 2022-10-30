@@ -60,8 +60,8 @@ all: main-build
 main-build: BasicConfig.elf secondary-outputs
 
 # Tool invocations
-BasicConfig.elf: $(OBJS) $(USER_OBJS) D:\Archivos,\ documentos\ Universidad\Taller\ 5\ Electronica\ digital\Talleres\ GIT\Talleres\BasicConfig\STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "BasicConfig.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Archivos, documentos Universidad\Taller 5 Electronica digital\Talleres GIT\Talleres\BasicConfig\STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BasicConfig.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+BasicConfig.elf: $(OBJS) $(USER_OBJS) D:\Archivos,\ documentos\ Universidad\Taller\ 5\ Electronica\ digital\Tareas\ GIT\Tareas\BasicConfig\STM32F411RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "BasicConfig.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Archivos, documentos Universidad\Taller 5 Electronica digital\Tareas GIT\Tareas\BasicConfig\STM32F411RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="BasicConfig.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

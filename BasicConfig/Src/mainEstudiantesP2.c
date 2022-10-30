@@ -20,6 +20,9 @@
 #include "BasicTimer.h"
 #include "USARTxDriver.h"
 #include "AdcDriver.h"
+#include "I2CDriver.h"
+#include "EXTIDriver.h"
+#include "PwmDriver.h"
 
 
 // Definicion de los handlers necesarios
@@ -33,18 +36,33 @@ BasicTimer_Handler_t handlerStateTimer 	= {0};
 // Utiliza la conexion USB
 USART_Handler_t handlerUsart2		= {0};
 
-// Configuración ADC
-ADC_Config_t 		adcConfig 		= {0};
-BasicTimer_Handler_t	handlerAdcTimer		= {0};
-
 // Variables USART
 uint8_t rxData = 0;
-char bufferData[64];
+char bufferData[64] = "esto es una pequeña prueba";
 
-// Variables ADC
+uint32_t systemTicks = 0;
+uint32_t systemTicksStart = 0;
+uint32_t systemTicksEnd = 0;
 
-uint16_t adcValue = 0;
-uint8_t adcIsComplete = RESET;
+/* Configuracion para el I2C*/
+GPIO_Handler_t handlerI2cSDA = {0};
+GPIO_Handler_t handlerI2cSCL = {0};
+I2C_Handler_t handlerAcceletometer = {0};
+
+uint8_t i2cBuffer = 0;
+
+
+#define ACCEL_ADDRESS 0b11100101
+#define ACCEL_XOUT_H  59
+#define ACCEL_XOUT_L  60
+#define ACCEL_YOUT_H  61
+#define ACCEL_YOUT_L  62
+#define ACCEL_ZOUT_H  63
+#define ACCEL_ZOUT_L  64
+
+#define PWR_MGMT_1    107
+#define WHO_AM_I      175
+
 
 /* Definición de prototipos de funciones */
 void InitSystem(void);
@@ -59,47 +77,52 @@ int main(void) {
 	// Inicializamos todos los elementos del sistema
 	InitSystem();
 
-	/* Loop forever */
-	while (1) {
+	while(1){
 
-		// El sistema siempre está verificando si el valor de rxData ha cambiado
-        // (lo cual sucede en la ISR de la recepcion (RX).
-        // Si este valor deja de ser '\0' significa que se recibio un caracter
-        // por lo tanto entra en el bloque if para analizar que se recibio
 		if(rxData != '\0'){
-			// Imprimimos el caracter recibido
-            writeChar(&handlerUsart2, rxData);
+			writeChar(&handlerUsart2, rxData);
 
-			// Iniciamos muestreo del ADC
-			if(rxData == 'c'){
-				// Activamos el TIM4
-				startTimer (&handlerAdcTimer);
+			if(rxData == 'd'){
+				i2cBuffer = i2c_readSingleRegister(&handlerAcceletometer, WHO_AM_I);
+				sprintf (bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
+				writeMsg(&handlerUsart2, bufferData);
+			}else if (rxData == 'p'){
+				i2cBuffer =i2c_readSingleRegister(&handlerAcceletometer, PWR_MGMT_1);
+				sprintf (bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
+				writeMsg(&handlerUsart2, bufferData);
+				rxData = '\0';
+			}else if (rxData == 'r'){
+				i2c_writeSingleRegister(&handlerAcceletometer, PWR_MGMT_1, 0x00);
+				rxData = '\0';
+
+			}else if (rxData == 'x'){
+				uint8_t AccelX_low = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_XOUT_L);
+				uint8_t AccelX_high = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_XOUT_H);
+				int16_t AccelX = AccelX_high << 8 | AccelX_low;
+				sprintf(bufferData, "AccelX = %d \n", (int) AccelX);
+				writeMsg(&handlerUsart2, bufferData);
+				rxData = '\0';
+			}else if (rxData == 'y'){
+				uint8_t AccelY_low = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_YOUT_L);
+				uint8_t AccelY_high = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_YOUT_H);
+				int16_t AccelY = AccelY_high << 8 | AccelY_low;
+				sprintf(bufferData, "AccelY = %d \n", (int) AccelY);
+				writeMsg(&handlerUsart2, bufferData);
+				rxData = '\0';
+			}else if (rxData == 'z'){
+				uint8_t AccelZ_low = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_ZOUT_L);
+				uint8_t AccelZ_high = i2c_readSingleRegister(&handlerAcceletometer, ACCEL_ZOUT_H);
+				int16_t AccelZ = AccelZ_high << 8 | AccelZ_low;
+				sprintf(bufferData, "AccelZ = %d \n", (int) AccelZ);
+				writeMsg(&handlerUsart2, bufferData);
+				rxData = '\0';
 			}
-			// Paramos muestreo del ADC
-			else if(rxData == 'p'){
-				// Desactivamos el TIM4
-				stopTimer (&handlerAdcTimer);
+			else{
+				rxData = '\0';
 			}
-			rxData = '\0';
 		}
 
-		// Mandamos los valores de la conversion ADC
-		if(adcIsComplete == SET){
-			// Seccionamos el valor en un arreglo
-			sprintf(bufferData, "%u \n", adcValue);
-
-
-			// Enviamos el dato del ADC resultante
-
-			writeMsg(&handlerUsart2,bufferData);
-
-			// Bajamos la bandera
-
-			adcIsComplete = RESET;
-		}
 	}
-
-	return 0;
 }
 
 /*
@@ -107,110 +130,87 @@ int main(void) {
  */
 void InitSystem(void){
 
-	// Configurando el pin para el Led_Blinky
-	handlerStateLed.pGPIOx 								= GPIOA;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinNumber		= PIN_5;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinMode			= GPIO_MODE_OUT;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinOPType		= GPIO_OTYPE_PUSHPULL;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinSpeed		= GPIO_OSPEEDR_FAST;
-	handlerStateLed.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-
-	// Cargamos la configuración del Pin del led de estado
+	//Configuracion del pin que controla el led de la board
+	handlerStateLed.pGPIOx                             = GPIOA;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinNumber      = PIN_8;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_OUT;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerStateLed.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerStateLed);
 
-	// Llevamos el Led a un estado de encendido
-	GPIO_WritePin(&handlerStateLed, RESET);
+	GPIO_WritePin(&handlerStateLed, SET);
 
-	/* Configurando los pines sobre los que funciona el USART2 (TX) */
-	handlerPinTx.pGPIOx 							= GPIOA;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinNumber		= PIN_2;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinMode		= GPIO_MODE_ALTFN;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinOPType		= GPIO_OTYPE_PUSHPULL;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinSpeed		= GPIO_OSPEEDR_FAST;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode	= AF7;
+	handlerPinTx.pGPIOx                             = GPIOA;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinNumber      = PIN_2;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinTx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinTx);
 
-	/* Configurando los pines sobre los que funciona el USART2 (RX) */
-	handlerPinRx.pGPIOx 							= GPIOA;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber		= PIN_3;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinMode		= GPIO_MODE_ALTFN;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinOPType		= GPIO_OTYPE_PUSHPULL;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinPuPdControl	= GPIO_PUPDR_NOTHING;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed		= GPIO_OSPEEDR_FAST;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinAltFunMode	= AF7;
+	handlerPinRx.pGPIOx                             = GPIOA;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber      = PIN_3;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRx);
 
-	// Configurando la comunicación serial (Cable verde es TX, Cable Blanco es RX)
-	handlerUsart2.ptrUSARTx 					= USART2;
-	handlerUsart2.USART_Config.USART_baudrate	= USART_BAUDRATE_115200;
-	handlerUsart2.USART_Config.USART_datasize	= USART_DATASIZE_8BIT;
-	handlerUsart2.USART_Config.USART_parity		= USART_PARITY_NONE;
-	handlerUsart2.USART_Config.USART_stopbits	= USART_STOPBIT_1;
-	handlerUsart2.USART_Config.USART_mode		= USART_MODE_RXTX;
-	handlerUsart2.USART_Config.USART_enableInRx	= USART_INTERRUPT_RX_ENABLE;
 
-	// Cargamos la configuración del USART
+	handlerUsart2.ptrUSARTx = USART2;
+	handlerUsart2.USART_Config.USART_baudrate = USART_BAUDRATE_115200;
+	handlerUsart2.USART_Config.USART_datasize = USART_DATASIZE_8BIT;
+	handlerUsart2.USART_Config.USART_enableInRx = USART_INTERRUPT_RX_ENABLE;
+	handlerUsart2.USART_Config.USART_enableInTx = USART_INTERRUPT_TX_DISABLE;
+	handlerUsart2.USART_Config.USART_mode       = USART_MODE_RXTX;
+	handlerUsart2.USART_Config.USART_parity   = USART_PARITY_ODD;
+	handlerUsart2.USART_Config.USART_stopbits = USART_STOPBIT_1;
 	USART_Config(&handlerUsart2);
 
-	// Configurando el Timer2 para que funcione con el blinky
-	handlerStateTimer.ptrTIMx 						= TIM2;
-	handlerStateTimer.TIMx_Config.TIMx_mode			= BTIMER_MODE_UP;
-	handlerStateTimer.TIMx_Config.TIMx_speed		= BTIMER_SPEED_1ms;
-	handlerStateTimer.TIMx_Config.TIMx_period		= 250;
-
-	// Cargamos la configuración del timer
+	handlerStateTimer.ptrTIMx = TIM2;
+	handlerStateTimer.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerStateTimer.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerStateTimer.TIMx_Config.TIMx_period = 2500;
+	handlerStateTimer.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerStateTimer);
 
-	// Activamos el TIM2
-	startTimer(&handlerStateTimer);
+	config_SysTickMs();
 
-	// Configuramos el timer del ADC
-	handlerAdcTimer.ptrTIMx						= TIM4;
-	handlerAdcTimer.TIMx_Config.TIMx_mode 		= BTIMER_MODE_UP;
-	handlerAdcTimer.TIMx_Config.TIMx_speed 		= BTIMER_SPEED_1ms;
-	handlerAdcTimer.TIMx_Config.TIMx_period 	= 10;
+	handlerI2cSCL.pGPIOx                             = GPIOB;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinNumber      = PIN_6;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_OPENDRAIN;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLUP;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerI2cSCL);
 
-	// Cargamos la configuración del timer
-	BasicTimer_Config(&handlerAdcTimer);
+	handlerI2cSDA.pGPIOx                             = GPIOB;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinNumber      = PIN_7;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_OPENDRAIN;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLUP;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerI2cSDA);
 
-	//Se establecen las configuraciones del ADC
-	adcConfig.channel				= ADC_CHANNEL_0;
-	adcConfig.dataAlignment 		= ADC_ALIGNMENT_RIGHT;
-	adcConfig.resolution 			= ADC_RESOLUTION_12_BIT;
-	adcConfig.samplingPeriod		= ADC_SAMPLING_PERIOD_15_CYCLES;
+	handlerAcceletometer.ptrI2Cx = I2C1;
+	handlerAcceletometer.modeI2C = I2C_MODE_FM;
+	handlerAcceletometer.slaveAddress = ACCEL_ADDRESS;
+	i2c_config(&handlerAcceletometer);
 
-	//Se carga la configuración del ADC
-	adc_Config(&adcConfig);
 
 }
 
-// ADC (conversión) Callback
-void adcComplete_Callback(void){
-	// Leemos los valores de la conversión ADC
-	adcValue = getADC();
-
-	// Levantamos la bandera
-	adcIsComplete = SET;
-}
-
-/* Callback del Timer4 - Hacemos una conversión ADC */
-void BasicTimer4_Callback(void){
-	// Comienza una convesión ADC
-	startSingleADC();
-}
-
-/* Callback del Timer2 - Hacemos un blinky... */
-void BasicTimer2_Callback(void){
-	handlerStateLed.pGPIOx -> ODR ^= GPIO_ODR_OD5;		// Encendido y apagado StateLED
-}
-
-/* Callback relacionado con la recepción del USART2
- * El puerto es leido en la ISR (para bajar la bandera de la interrupción)
- * El caracter que se lee es devuelto por la función getRxData
- */
 void usart2Rx_Callback(void){
-	// Leemos el valor del registro DR, donde se almacena el dato que llega.
-	// Esto además debe bajar la bandera de la interrupción
 	rxData = getRxData();
+}
+
+
+void BasicTimer2_Callback(void){
+	GPIOxTooglePin(&handlerStateLed);
 }
