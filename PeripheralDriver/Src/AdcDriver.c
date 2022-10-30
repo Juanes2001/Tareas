@@ -307,3 +307,21 @@ void configAnalogPin(uint8_t adcChannel) {
 	handlerAdcPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ANALOG;
 	GPIO_Config(&handlerAdcPin);
 }
+
+
+void adcExternalConfig (){
+	//Seleccionamos el tipo de evento que queremos reconocer en el miltipleXOR, un rising edge.
+ 	ADC1->CR2 |= ADC_CR2_EXTEN_0;
+ 	//Activamos los eventos por eventos externos (EXTI11)
+	ADC1->CR2 |= (0xF << ADC_CR2_EXTSEL_Pos);
+}
+
+
+void adcTimerEventConfig(){
+	//Seleccionamos el tipo de evento que queremos reconocer en el miltipleXOR, un falling edge.
+	ADC1->CR2 |= ADC_CR2_EXTEN_1;
+
+	//Activamos los eventos por eventos de PWM (TIMER1 canal 1)
+	ADC1->CR2 &= ~(0xF << ADC_CR2_EXTSEL_Pos);
+
+}

@@ -59,6 +59,8 @@ void adcComplete_Callback(void);
 void startSingleADC(void);
 void startContinousADC(void);
 uint16_t getADC(void);
+void adcExternalConfig ();
+void adcTimerEventConfig();
 
 //void ADC_ConfigMultichannel (ADC_Config_t *adcConfig, uint8_t numeroDeCanales);
 
