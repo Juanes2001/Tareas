@@ -778,3 +778,28 @@ void EXTI15_10_IRQHandler(void){
 	}
 
 }
+
+void configExternalTrigger(GPIO_Handler_t *pGPIOHandler){
+
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
+
+	if (pGPIOHandler->pGPIOx == GPIOA){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PA);
+	}else if (pGPIOHandler->pGPIOx == GPIOB){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PB);
+	}else if (pGPIOHandler->pGPIOx == GPIOC){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PC);
+	}else if (pGPIOHandler->pGPIOx == GPIOD){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PD);
+	}else if (pGPIOHandler->pGPIOx == GPIOE){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PE);
+	}else if (pGPIOHandler->pGPIOx == GPIOH){
+		SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI11_PH);
+	}else{
+		__NOP();
+	}
+
+	EXTI->RTSR |= (1U << pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
+
+	EXTI->EMR |= (1U << pGPIOHandler->GPIO_PinConfig.GPIO_PinNumber);
+}

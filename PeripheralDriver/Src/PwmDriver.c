@@ -231,6 +231,54 @@ void updateDuttyCycle(PWM_Handler_t *ptrPwmHandler, uint16_t newDutty){
     setDuttyCycle(ptrPwmHandler);
 }
 
+void enableEvent(PWM_Handler_t *ptrPwmHandler){
+	switch (ptrPwmHandler->config.channel){
+	case PWM_CHANNEL_1: {
+		ptrPwmHandler->ptrTIMx->EGR |= TIM_EGR_CC1G;
+		break;
+	}
+	case PWM_CHANNEL_2: {
+		ptrPwmHandler->ptrTIMx->EGR |= TIM_EGR_CC2G;
+		break;
+	}
+	case PWM_CHANNEL_3: {
+		ptrPwmHandler->ptrTIMx->EGR |= TIM_EGR_CC3G;
+		break;
+	}
+	case PWM_CHANNEL_4: {
+		ptrPwmHandler->ptrTIMx->EGR |= TIM_EGR_CC4G;
+		break;
+	}
+	default:{
+		break;
+	}
+	}
+}
+
+void disableEvent(PWM_Handler_t *ptrPwmHandler){
+	switch (ptrPwmHandler->config.channel){
+		case PWM_CHANNEL_1: {
+			ptrPwmHandler->ptrTIMx->EGR &= ~TIM_EGR_CC1G;
+			break;
+		}
+		case PWM_CHANNEL_2: {
+			ptrPwmHandler->ptrTIMx->EGR &= ~TIM_EGR_CC2G;
+			break;
+		}
+		case PWM_CHANNEL_3: {
+			ptrPwmHandler->ptrTIMx->EGR &= ~TIM_EGR_CC3G;
+			break;
+		}
+		case PWM_CHANNEL_4: {
+			ptrPwmHandler->ptrTIMx->EGR &= ~TIM_EGR_CC4G;
+			break;
+		}
+		default:{
+			break;
+		}
+		}
+}
+
 
 
 

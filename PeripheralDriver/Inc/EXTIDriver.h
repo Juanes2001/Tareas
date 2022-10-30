@@ -22,6 +22,7 @@ typedef struct
 
 
 void extInt_Config(EXTI_Config_t *extiConfig);
+void configExternalTrigger(GPIO_Handler_t *pGPIOHandler);
 void callback_extInt0(void);
 void callback_extInt1(void);
 void callback_extInt2(void);
