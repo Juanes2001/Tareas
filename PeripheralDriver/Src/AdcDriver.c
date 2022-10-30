@@ -15,9 +15,8 @@ void adc_Config(ADC_Config_t *adcConfig){
 	configAnalogPin(adcConfig->channel);
 
 	/* 2. Activamos la señal de reloj para el periférico ADC1 (bus APB2)*/
-	if (adcConfig->channel == 0){
-		RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
-	}
+
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
 
 	// Limpiamos los registros antes de comenzar a configurar
 	ADC1->CR1 = 0;
