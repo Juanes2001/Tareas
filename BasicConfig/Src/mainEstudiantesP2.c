@@ -30,6 +30,7 @@ GPIO_Handler_t handlerStateLed = {0};
 GPIO_Handler_t handlerPinTx		= {0};
 GPIO_Handler_t handlerPinRx		= {0};
 
+
 // Timer encargado del Blinky
 BasicTimer_Handler_t handlerStateTimer 	= {0};
 
@@ -198,6 +199,12 @@ void InitSystem(void){
 	handlerAcceletometer.modeI2C = I2C_MODE_FM;
 	handlerAcceletometer.slaveAddress = ACCEL_ADDRESS;
 	i2c_config(&handlerAcceletometer);
+
+
+
+
+
+
 
 
 }

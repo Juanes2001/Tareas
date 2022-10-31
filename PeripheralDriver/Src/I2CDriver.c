@@ -202,8 +202,8 @@
  * I2CDriver.c
  *
  *  Created on: 20/10/2022
- *      Author: David Correa Correa
- *      Email: dcorreaco@unal.edu.co
+ *      Author: Juan Esteban Rodriguez Ochoa
+ *      Email: jrodriguezoc@unal
  */
 
 
