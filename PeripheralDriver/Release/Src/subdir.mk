@@ -9,6 +9,8 @@ C_SRCS += \
 ../Src/BasicTimer.c \
 ../Src/EXTIDriver.c \
 ../Src/GPIOxDriver.c \
+../Src/I2CDriver.c \
+../Src/PwmDriver.c \
 ../Src/USARTxDriver.c \
 ../Src/syscalls.c \
 ../Src/sysmem.c 
@@ -18,6 +20,8 @@ OBJS += \
 ./Src/BasicTimer.o \
 ./Src/EXTIDriver.o \
 ./Src/GPIOxDriver.o \
+./Src/I2CDriver.o \
+./Src/PwmDriver.o \
 ./Src/USARTxDriver.o \
 ./Src/syscalls.o \
 ./Src/sysmem.o 
@@ -27,6 +31,8 @@ C_DEPS += \
 ./Src/BasicTimer.d \
 ./Src/EXTIDriver.d \
 ./Src/GPIOxDriver.d \
+./Src/I2CDriver.d \
+./Src/PwmDriver.d \
 ./Src/USARTxDriver.d \
 ./Src/syscalls.d \
 ./Src/sysmem.d 

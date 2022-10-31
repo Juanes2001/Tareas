@@ -187,29 +187,26 @@ void setDuttyCycle(PWM_Handler_t *ptrPwmHandler){
 	// Seleccionamos el canal para configurar su dutty
 	switch(ptrPwmHandler->config.channel){
 	case PWM_CHANNEL_1:{
-		ptrPwmHandler->ptrTIMx->CCR1 = (ptrPwmHandler->config.duttyCicle/100) *
-				ptrPwmHandler->config.periodo;
-
+		uint32_t op = (ptrPwmHandler->config.duttyCicle) * (ptrPwmHandler->config.periodo);
+		ptrPwmHandler->ptrTIMx->CCR1 = (op)/100;
 		break;
 	}
 
 	case PWM_CHANNEL_2:{
-		ptrPwmHandler->ptrTIMx->CCR2 = (ptrPwmHandler->config.duttyCicle/100) *
-				ptrPwmHandler->config.periodo;
-
+		uint32_t op = (ptrPwmHandler->config.duttyCicle) * (ptrPwmHandler->config.periodo);
+		ptrPwmHandler->ptrTIMx->CCR2 = (op)/100;
 		break;
 	}
 
 	case PWM_CHANNEL_3:{
-		ptrPwmHandler->ptrTIMx->CCR3 = (ptrPwmHandler->config.duttyCicle/100) *
-				ptrPwmHandler->config.periodo;
-
+		uint32_t op = (ptrPwmHandler->config.duttyCicle) * (ptrPwmHandler->config.periodo);
+		ptrPwmHandler->ptrTIMx->CCR3 = (op)/100;
 		break;
 	}
 
 	case PWM_CHANNEL_4:{
-		ptrPwmHandler->ptrTIMx->CCR4 = (ptrPwmHandler->config.duttyCicle/100) *
-				ptrPwmHandler->config.periodo;
+		uint32_t op = (ptrPwmHandler->config.duttyCicle) * (ptrPwmHandler->config.periodo);
+		ptrPwmHandler->ptrTIMx->CCR4 = (op)/100;
 		break;
 	}
 

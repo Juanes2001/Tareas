@@ -1,4 +1,5 @@
 "./Src/main.o"
+"./Src/main2.o"
 "./Src/mainEstudiantesP2.o"
 "./Src/syscalls.o"
 "./Src/sysmem.o"

@@ -40,10 +40,6 @@ USART_Handler_t handlerUsart2		= {0};
 uint8_t rxData = 0;
 char bufferData[64] = "esto es una pequeña prueba";
 
-uint32_t systemTicks = 0;
-uint32_t systemTicksStart = 0;
-uint32_t systemTicksEnd = 0;
-
 /* Configuracion para el I2C*/
 GPIO_Handler_t handlerI2cSDA = {0};
 GPIO_Handler_t handlerI2cSCL = {0};
@@ -52,7 +48,7 @@ I2C_Handler_t handlerAcceletometer = {0};
 uint8_t i2cBuffer = 0;
 
 
-#define ACCEL_ADDRESS 0b11100101
+#define ACCEL_ADDRESS 0x1D
 #define ACCEL_XOUT_H  59
 #define ACCEL_XOUT_L  60
 #define ACCEL_YOUT_H  61
@@ -86,6 +82,7 @@ int main(void) {
 				i2cBuffer = i2c_readSingleRegister(&handlerAcceletometer, WHO_AM_I);
 				sprintf (bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
 				writeMsg(&handlerUsart2, bufferData);
+				rxData = '\0';
 			}else if (rxData == 'p'){
 				i2cBuffer =i2c_readSingleRegister(&handlerAcceletometer, PWR_MGMT_1);
 				sprintf (bufferData, "dataRead = 0x%2x \n", (unsigned int) i2cBuffer);
@@ -178,7 +175,6 @@ void InitSystem(void){
 	handlerStateTimer.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerStateTimer);
 
-	config_SysTickMs();
 
 	handlerI2cSCL.pGPIOx                             = GPIOB;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
