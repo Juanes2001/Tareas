@@ -326,8 +326,8 @@ void adcTimerEventConfig(){
 	//Seleccionamos el tipo de evento que queremos reconocer en el miltipleXOR, un falling edge.
 	ADC1->CR2 |= ADC_CR2_EXTEN_1;
 
-	//Activamos los eventos por eventos de PWM (TIMER1 canal 1)
-	ADC1->CR2 &= ~(0xF << ADC_CR2_EXTSEL_Pos);
+	//Activamos los eventos por eventos de PWM (TIMER3 canal 1)
+	ADC1->CR2 |= (0x7 << ADC_CR2_EXTSEL_Pos);
 
 }
 

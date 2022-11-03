@@ -18,7 +18,8 @@
 
 #define USART_BAUDRATE_9600		0
 #define USART_BAUDRATE_19200	1
-#define USART_BAUDRATE_115200	2
+#define USART_BAUDRATE_28800	2
+#define USART_BAUDRATE_115200	3
 
 #define USART_DATASIZE_8BIT		0
 #define USART_DATASIZE_9BIT		1
@@ -83,6 +84,9 @@ void USART_Config(USART_Handler_t *ptrUsartHandler);
 int writeChar(USART_Handler_t *ptrUsartHandler, int dataToSend );
 void writeMsg(USART_Handler_t *ptrUsartHandler, char *msgToSend);
 uint8_t getRxData(void);
+void usart1Rx_Callback(void);
+void usart2Rx_Callback(void);
+void usart6Rx_Callback(void);
 
 
 #endif /* INC_USARTXDRIVER_H_ */
