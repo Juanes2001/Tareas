@@ -12,6 +12,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 	/* 1. Activar la señal de reloj del periférico requerido */
 	if (ptrPwmHandler->ptrTIMx == TIM1){
 		RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
+
 	}else if(ptrPwmHandler->ptrTIMx == TIM2){
 		RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	}
@@ -57,7 +58,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC1PE;
-		enableOutput(ptrPwmHandler);
+
 		break;
 	}
 
@@ -70,7 +71,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR1 |= TIM_CCMR1_OC2PE;
-		enableOutput(ptrPwmHandler);
+
 		break;
 	}
 
@@ -83,7 +84,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC3PE;
-		enableOutput(ptrPwmHandler);
+
 		break;
 	}
 	case PWM_CHANNEL_4:{
@@ -95,7 +96,7 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 
 		// Activamos la funcionalidad de pre-load
 		ptrPwmHandler->ptrTIMx->CCMR2 |= TIM_CCMR2_OC4PE;
-		enableOutput(ptrPwmHandler);
+
 		break;
 	}
 
@@ -278,6 +279,44 @@ void disableEvent(PWM_Handler_t *ptrPwmHandler){
 		}
 }
 
+
+void disableOutput(PWM_Handler_t *ptrPwmHandler){
+
+	switch (ptrPwmHandler->config.channel) {
+		case PWM_CHANNEL_1: {
+			// Activamos la salida del canal 1
+			ptrPwmHandler->ptrTIMx->CCER &= ~TIM_CCER_CC1E;
+
+			break;
+		}
+
+		case PWM_CHANNEL_2: {
+			// Activamos la salida del canal 2
+			ptrPwmHandler->ptrTIMx->CCER &= ~TIM_CCER_CC2E;
+
+			break;
+		}
+
+		case PWM_CHANNEL_3: {
+			// Activamos la salida del canal 3
+			ptrPwmHandler->ptrTIMx->CCER &= ~TIM_CCER_CC3E;
+
+			break;
+		}
+
+		case PWM_CHANNEL_4: {
+			// Activamos la salida del canal 4
+			ptrPwmHandler->ptrTIMx->CCER &= ~TIM_CCER_CC4E;
+
+			break;
+		}
+
+		default: {
+			break;
+		}
+		}
+
+}
 
 
 

@@ -333,8 +333,8 @@ void adcTimerEventConfig(){
 
 void ADC_ConfigMultichannel (ADC_Config_t *adcConfig, uint8_t numeroDeCanales){
 	/* 1. Configuramos el PinX para que cumpla la función de canal análogo deseado. */
-	for (uint8_t i = 0; i <= numeroDeCanales; i++){
-		configAnalogPin(adcConfig->channelVector[i]);
+	for (uint8_t j = 0; j < numeroDeCanales; j++){
+		configAnalogPin(adcConfig->channelVector[j]);
 	}
 
 
