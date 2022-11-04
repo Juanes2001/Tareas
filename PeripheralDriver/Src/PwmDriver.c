@@ -113,12 +113,14 @@ void pwm_Config(PWM_Handler_t *ptrPwmHandler){
 /* Función para activar el Timer y activar todo el módulo PWM */
 void startPwmSignal(PWM_Handler_t *ptrPwmHandler) {
 	ptrPwmHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
+	enableOutput(ptrPwmHandler);
 
 }
 
 /* Función para desactivar el Timer y detener todo el módulo PWM*/
 void stopPwmSignal(PWM_Handler_t *ptrPwmHandler) {
 	ptrPwmHandler->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
+	disableOutput(ptrPwmHandler);
 }
 
 /* Función encargada de activar cada uno de los canales con los que cuenta el TimerX */

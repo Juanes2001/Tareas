@@ -38,9 +38,10 @@ GPIO_Handler_t handlerLEDPin = {0};
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
-PWM_Handler_t handlerPwmR = {0};
-PWM_Handler_t handlerPwmG = {0};
-PWM_Handler_t handlerPwmB = {0};
+PWM_Handler_t handlerADCPwm = {0};
+PWM_Handler_t handlerPwmR   = {0};
+PWM_Handler_t handlerPwmG   = {0};
+PWM_Handler_t handlerPwmB   = {0};
 
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
@@ -61,6 +62,8 @@ uint8_t counterR = 0;
 uint8_t counterG = 0;
 uint8_t counterB = 0;
 uint8_t dutty = 0;
+char bufferData [64];
+uint8_t counterADC = 0;
 
 
 
@@ -71,29 +74,56 @@ int main(void){
 
 
 	while(1){
-		counterR = handlerPwmR.ptrTIMx->CCR2;
-		counterG = handlerPwmG.ptrTIMx->CCR3;
-		counterB = handlerPwmB.ptrTIMx->CCR4;
+//		counterR = handlerPwmR.ptrTIMx->CCR2;
+//		counterG = handlerPwmG.ptrTIMx->CCR3;
+//		counterB = handlerPwmB.ptrTIMx->CCR4;
+//
+//		if (rxData == 's'){
+//
+//			startPwmSignal(&handlerPwmR);
+//			startPwmSignal(&handlerPwmG);
+//			startPwmSignal(&handlerPwmB);
+//			rxData = '\0';
+//		}else if(rxData == 'p'){
+//
+//			stopPwmSignal(&handlerPwmR);
+//			stopPwmSignal(&handlerPwmG);
+//			stopPwmSignal(&handlerPwmB);
+//			rxData = '\0';
+//		}
+
 
 		if (rxData == 's'){
-
-			startPwmSignal(&handlerPwmR);
-			startPwmSignal(&handlerPwmG);
-			startPwmSignal(&handlerPwmB);
-			enableOutput(&handlerPwmR);
-			enableOutput(&handlerPwmG);
-			enableOutput(&handlerPwmB);
+			startPwmSignal(&handlerADCPwm);
+			startSingleADC();
 			rxData = '\0';
-		}else if(rxData == 'p'){
-
-			stopPwmSignal(&handlerPwmR);
-			stopPwmSignal(&handlerPwmG);
-			stopPwmSignal(&handlerPwmB);
-			disableOutput(&handlerPwmR);
-			disableOutput(&handlerPwmG);
-			disableOutput(&handlerPwmB);
+		}else if (rxData == 'p'){
+			stopPwmSignal(&handlerADCPwm);
 			rxData = '\0';
 		}
+
+		if (adcConvertion){
+			if (counterADC % 2 == 0){
+				sprintf(bufferData, "Vx = %u   ", adcData);
+				writeMsg(&handlerUSART1, bufferData);
+				adcConvertion = RESET;
+			}else if (counterADC % 2 != 0){
+				sprintf(bufferData , "Vy = %u \n \r", adcData);
+				writeMsg(&handlerUSART1, bufferData);
+				adcConvertion = RESET;
+			}
+		}else{
+			__NOP();
+		}
+
+
+
+
+
+
+
+
+
 
 //		if (rxData == 'r'){
 //			if (counterR > 100){
@@ -143,6 +173,14 @@ void inSystem (void){
 	GPIO_Config(&handlerLEDPin);
 
 	//Conversion del JOYSTICK
+
+	handlerADCPwm.ptrTIMx = TIM3;
+	handlerADCPwm.config.channel = PWM_CHANNEL_1;
+	handlerADCPwm.config.duttyCicle = 50;
+	handlerADCPwm.config.periodo = 100;
+	handlerADCPwm.config.prescaler = BTIMER_SPEED_100us;
+	pwm_Config(&handlerADCPwm);
+
     for (uint8_t i = 0 ; i < 2 ; i++){
     	handlerADCJoy.channelVector[i] = i;
     }
@@ -248,7 +286,7 @@ void BasicTimer2_Callback(void){
 
 void adcComplete_Callback(void){
 	adcData = getADC();
-
+	counterADC++;
 	adcConvertion = SET;
 }
 

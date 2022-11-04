@@ -404,7 +404,7 @@ void ADC_ConfigMultichannel (ADC_Config_t *adcConfig, uint8_t numeroDeCanales){
 			ADC1->SMPR2 |= (adcConfig->samplingPeriod) << (0x3 * adcConfig->channelVector[i]);
 		}
 		else{
-			ADC1->SMPR1 |= (adcConfig->samplingPeriod) << (0x3 * adcConfig->channelVector[i]);
+			ADC1->SMPR1 |= (adcConfig->samplingPeriod) << (0x3 * (adcConfig->channelVector[i]- 10));
 		}
 
 	}
