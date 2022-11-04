@@ -38,13 +38,14 @@ GPIO_Handler_t handlerLEDPin = {0};
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
-PWM_Handler_t handlerADCPwm = {0};
+//PWM_Handler_t handlerADCPwm = {0};
 PWM_Handler_t handlerPwmR   = {0};
 PWM_Handler_t handlerPwmG   = {0};
 PWM_Handler_t handlerPwmB   = {0};
 
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
+BasicTimer_Handler_t handlerADCTim = {0};
 
 
 
@@ -94,11 +95,10 @@ int main(void){
 
 
 		if (rxData == 's'){
-			startPwmSignal(&handlerADCPwm);
-			startSingleADC();
+			startTimer(&handlerADCTim);
 			rxData = '\0';
 		}else if (rxData == 'p'){
-			stopPwmSignal(&handlerADCPwm);
+			stopTimer(&handlerADCTim);
 			rxData = '\0';
 		}
 
@@ -174,12 +174,18 @@ void inSystem (void){
 
 	//Conversion del JOYSTICK
 
-	handlerADCPwm.ptrTIMx = TIM3;
-	handlerADCPwm.config.channel = PWM_CHANNEL_1;
-	handlerADCPwm.config.duttyCicle = 50;
-	handlerADCPwm.config.periodo = 100;
-	handlerADCPwm.config.prescaler = BTIMER_SPEED_100us;
-	pwm_Config(&handlerADCPwm);
+//	handlerADCPwm.ptrTIMx = TIM3;
+//	handlerADCPwm.config.channel = PWM_CHANNEL_1;
+//	handlerADCPwm.config.duttyCicle = 50;
+//	handlerADCPwm.config.periodo = 100;
+//	handlerADCPwm.config.prescaler = BTIMER_SPEED_100us;
+//	pwm_Config(&handlerADCPwm);
+	handlerADCTim.ptrTIMx = TIM4;
+	handlerADCTim.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerADCTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerADCTim.TIMx_Config.TIMx_period = 100;
+	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerADCTim);
 
     for (uint8_t i = 0 ; i < 2 ; i++){
     	handlerADCJoy.channelVector[i] = i;
@@ -188,7 +194,6 @@ void inSystem (void){
     handlerADCJoy.resolution = ADC_RESOLUTION_8_BIT;
     handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
     ADC_ConfigMultichannel(&handlerADCJoy, 2);
-    adcTimerEventConfig();
 
     //Comunicacion Serial
 
@@ -294,4 +299,7 @@ void usart2Rx_Callback(void){
 	rxData = getRxData();
 }
 
+void BasicTimer4_Callback(void){
+	startSingleADC();
+}
 
