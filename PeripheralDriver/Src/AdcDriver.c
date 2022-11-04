@@ -104,6 +104,7 @@ void adc_Config(ADC_Config_t *adcConfig){
 	/* 11. Activamos la interrupción debida a la finalización de una conversión EOC (CR1)*/
 	ADC1->CR1 |= ADC_CR1_EOCIE;
 
+
 	/* 11a. Matriculamos la interrupción en el NVIC*/
 	__NVIC_EnableIRQ(ADC_IRQn);
 
@@ -435,8 +436,13 @@ void ADC_ConfigMultichannel (ADC_Config_t *adcConfig, uint8_t numeroDeCanales){
 
 	}
 
+<<<<<<< HEAD
 	//Activamos interrupciones cada fin de secuencia.
 	ADC1->CR2 |= ADC_CR2_EOCS;
+=======
+	//Activamos la interrucion para cada canal
+	//ADC1->CR2 &= ~ADC_CR2_EOCS;
+>>>>>>> 28076fec1b4e55957343ed261867d65d18844005
 
 
 	/* 9. Configuramos el preescaler del ADC en 2:1 (el mas rápido que se puede tener */
