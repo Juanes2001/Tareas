@@ -38,13 +38,13 @@ GPIO_Handler_t handlerLEDPin = {0};
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
-PWM_Handler_t handlerADCPwm = {0};
 PWM_Handler_t handlerPwmR   = {0};
 PWM_Handler_t handlerPwmG   = {0};
 PWM_Handler_t handlerPwmB   = {0};
 
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
+BasicTimer_Handler_t handlerADCTim = {0};
 
 
 
@@ -55,15 +55,17 @@ void inSystem (void);
 
 
 //Variables necesarias para el programa
-uint8_t adcData = 0;
+uint8_t adcData[2];
 uint8_t adcConvertion = RESET;
 uint8_t rxData = '\0';
 uint8_t counterR = 0;
 uint8_t counterG = 0;
 uint8_t counterB = 0;
 uint8_t dutty = 0;
-char bufferData [64];
+char bufferData1 [64];
+char bufferData2 [64];
 uint8_t counterADC = 0;
+
 
 
 
@@ -94,25 +96,21 @@ int main(void){
 
 
 		if (rxData == 's'){
-			startPwmSignal(&handlerADCPwm);
-			startSingleADC();
+			startTimer(&handlerADCTim);
 			rxData = '\0';
 		}else if (rxData == 'p'){
-			stopPwmSignal(&handlerADCPwm);
+			stopTimer(&handlerADCTim);
 			rxData = '\0';
 		}
 
 		if (adcConvertion){
-			if (counterADC % 2 == 0){
-				sprintf(bufferData, "Vx = %u   ", adcData);
-				writeMsg(&handlerUSART1, bufferData);
-				adcConvertion = RESET;
-			}else if (counterADC % 2 != 0){
-				sprintf(bufferData , "Vy = %u \n \r", adcData);
-				writeMsg(&handlerUSART1, bufferData);
-				adcConvertion = RESET;
-			}
-		}else{
+			sprintf(bufferData1, "Vx = %u  ", adcData[0]);
+			sprintf(bufferData2, "Vy = %u \n \r", adcData[1]);
+			writeMsg(&handlerUSART1, bufferData1);
+			writeMsg(&handlerUSART1, bufferData2);
+			adcConvertion = RESET;
+		}
+		else{
 			__NOP();
 		}
 
@@ -173,13 +171,13 @@ void inSystem (void){
 	GPIO_Config(&handlerLEDPin);
 
 	//Conversion del JOYSTICK
+	handlerADCTim.ptrTIMx = TIM4;
+	handlerADCTim.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerADCTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerADCTim.TIMx_Config.TIMx_period = 100;
+	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerADCTim);
 
-	handlerADCPwm.ptrTIMx = TIM3;
-	handlerADCPwm.config.channel = PWM_CHANNEL_1;
-	handlerADCPwm.config.duttyCicle = 50;
-	handlerADCPwm.config.periodo = 100;
-	handlerADCPwm.config.prescaler = BTIMER_SPEED_100us;
-	pwm_Config(&handlerADCPwm);
 
     for (uint8_t i = 0 ; i < 2 ; i++){
     	handlerADCJoy.channelVector[i] = i;
@@ -188,11 +186,10 @@ void inSystem (void){
     handlerADCJoy.resolution = ADC_RESOLUTION_8_BIT;
     handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
     ADC_ConfigMultichannel(&handlerADCJoy, 2);
-    adcTimerEventConfig();
 
     //Comunicacion Serial
 
-    handlerPinTx.pGPIOx = GPIOA;
+    handlerPinTx.pGPIOx                             = GPIOA;
     handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
     handlerPinTx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
     handlerPinTx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
@@ -211,14 +208,14 @@ void inSystem (void){
 	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRx);
 
-	handlerUSART1.ptrUSARTx = USART2;
-	handlerUSART1.USART_Config.USART_baudrate = USART_BAUDRATE_28800;//37,7222 de Mantiza
+	handlerUSART1.ptrUSARTx                     = USART2;
+	handlerUSART1.USART_Config.USART_baudrate   = USART_BAUDRATE_28800;//37,7222 de Mantiza
 	handlerUSART1.USART_Config.USART_enableInRx = USART_INTERRUPT_RX_ENABLE;
 	handlerUSART1.USART_Config.USART_enableInTx = USART_INTERRUPT_TX_DISABLE;
-	handlerUSART1.USART_Config.USART_mode = USART_MODE_RXTX;
-	handlerUSART1.USART_Config.USART_parity = USART_PARITY_ODD;
-	handlerUSART1.USART_Config.USART_stopbits = USART_STOPBIT_1;
-	handlerUSART1.USART_Config.USART_datasize = USART_DATASIZE_9BIT;
+	handlerUSART1.USART_Config.USART_mode       = USART_MODE_RXTX;
+	handlerUSART1.USART_Config.USART_parity     = USART_PARITY_ODD;
+	handlerUSART1.USART_Config.USART_stopbits   = USART_STOPBIT_1;
+	handlerUSART1.USART_Config.USART_datasize   = USART_DATASIZE_9BIT;
 	USART_Config(&handlerUSART1);
 
 
@@ -285,13 +282,25 @@ void BasicTimer2_Callback(void){
 }
 
 void adcComplete_Callback(void){
-	adcData = getADC();
 	counterADC++;
-	adcConvertion = SET;
+	if ((counterADC % 2) != 0){
+		adcData[0] = getADC();
+	}else if ((counterADC % 2) == 0){
+		adcData[1] = getADC();
+	}
+
+	if ((counterADC % 2) == 0){
+		adcConvertion = SET;
+	}
+
+
 }
 
 void usart2Rx_Callback(void){
 	rxData = getRxData();
 }
 
+void BasicTimer4_Callback(void){
+	startSingleADC();
+}
 
