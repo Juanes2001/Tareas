@@ -63,11 +63,13 @@ uint8_t rxData = '\0';
 uint8_t counterR = 0;
 uint8_t counterG = 0;
 uint8_t counterB = 0;
-uint8_t dutty = 0;
 char bufferData1 [64];
 char bufferData2 [64];
 uint8_t counterADC = 0;
 
+uint8_t duttyR = 0;
+uint8_t duttyG = 0;
+uint8_t duttyB = 0;
 
 
 
@@ -78,30 +80,23 @@ int main(void){
 
 
 	while(1){
-//		counterR = handlerPwmR.ptrTIMx->CCR2;
-//		counterG = handlerPwmG.ptrTIMx->CCR3;
-//		counterB = handlerPwmB.ptrTIMx->CCR4;
-//
-//		if (rxData == 's'){
-//
-//			startPwmSignal(&handlerPwmR);
-//			startPwmSignal(&handlerPwmG);
-//			startPwmSignal(&handlerPwmB);
-//			rxData = '\0';
-//		}else if(rxData == 'p'){
-//
-//			stopPwmSignal(&handlerPwmR);
-//			stopPwmSignal(&handlerPwmG);
-//			stopPwmSignal(&handlerPwmB);
-//			rxData = '\0';
-//		}
+		counterR = handlerPwmR.ptrTIMx->CCR2;
+		counterG = handlerPwmG.ptrTIMx->CCR3;
+		counterB = handlerPwmB.ptrTIMx->CCR4;
+
 
 
 		if (rxData == 's'){
 			startTimer(&handlerADCTim);
+			startPwmSignal(&handlerPwmR);
+			startPwmSignal(&handlerPwmG);
+			startPwmSignal(&handlerPwmB);
 			rxData = '\0';
 		}else if (rxData == 'p'){
 			stopTimer(&handlerADCTim);
+			stopPwmSignal(&handlerPwmR);
+			stopPwmSignal(&handlerPwmG);
+			stopPwmSignal(&handlerPwmB);
 			rxData = '\0';
 		}
 
@@ -267,7 +262,7 @@ void inSystem (void){
 
 	handlerPwmR.ptrTIMx           = TIM3;
 	handlerPwmR.config.channel    = PWM_CHANNEL_2;
-	handlerPwmR.config.duttyCicle = 50;
+	handlerPwmR.config.duttyCicle = 100;
 	handlerPwmR.config.periodo    = 100;
 	handlerPwmR.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmR);
@@ -275,14 +270,14 @@ void inSystem (void){
 
 	handlerPwmG.ptrTIMx           = TIM3;
 	handlerPwmG.config.channel    = PWM_CHANNEL_3;
-	handlerPwmG.config.duttyCicle = 50;
+	handlerPwmG.config.duttyCicle = 100;
 	handlerPwmG.config.periodo    = 100;
 	handlerPwmG.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmG);
 
 	handlerPwmB.ptrTIMx           = TIM3;
 	handlerPwmB.config.channel    = PWM_CHANNEL_4;
-	handlerPwmB.config.duttyCicle = 50;
+	handlerPwmB.config.duttyCicle = 100;
 	handlerPwmB.config.periodo    = 100;
 	handlerPwmB.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmB);
