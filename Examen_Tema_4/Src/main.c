@@ -38,10 +38,8 @@ GPIO_Handler_t handlerLEDPin = {0};
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
-<<<<<<< HEAD
-=======
 //PWM_Handler_t handlerADCPwm = {0};
->>>>>>> 28076fec1b4e55957343ed261867d65d18844005
+
 PWM_Handler_t handlerPwmR   = {0};
 PWM_Handler_t handlerPwmG   = {0};
 PWM_Handler_t handlerPwmB   = {0};
@@ -182,8 +180,7 @@ void inSystem (void){
 	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerADCTim);
 
-<<<<<<< HEAD
-=======
+
 //	handlerADCPwm.ptrTIMx = TIM3;
 //	handlerADCPwm.config.channel = PWM_CHANNEL_1;
 //	handlerADCPwm.config.duttyCicle = 50;
@@ -195,8 +192,7 @@ void inSystem (void){
 	handlerADCTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
 	handlerADCTim.TIMx_Config.TIMx_period = 100;
 	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
-	BasicTimer_Config(&handlerADCTim);
->>>>>>> 28076fec1b4e55957343ed261867d65d18844005
+
 
     for (uint8_t i = 0 ; i < 2 ; i++){
     	handlerADCJoy.channelVector[i] = i;
