@@ -57,7 +57,7 @@ void inSystem (void);
 
 
 //Variables necesarias para el programa
-uint8_t adcData[2];
+uint32_t adcData[2];
 uint8_t adcConvertion = RESET;
 uint8_t rxData = '\0';
 uint8_t counterR = 0;
@@ -65,11 +65,29 @@ uint8_t counterG = 0;
 uint8_t counterB = 0;
 char bufferData1 [64];
 char bufferData2 [64];
+char bufferData3 [64];
 uint8_t counterADC = 0;
 
-uint8_t duttyR = 0;
-uint8_t duttyG = 0;
-uint8_t duttyB = 0;
+uint8_t duttyUpR = 0;
+uint8_t duttyUpG = 0;
+uint8_t duttyUpB1 = 0;
+uint8_t duttyUpB2 = 0;
+uint8_t duttyDownR = 0;
+uint8_t duttyDownG1 = 0;
+uint8_t duttyDownG2 = 0;
+uint8_t duttyDownB = 0;
+uint16_t vectorArcUp = 0;
+uint16_t vectorArcDown = 0;
+
+int16_t x = 0;
+int16_t y = 0;
+
+uint8_t rmax = 125;
+
+
+
+
+
 
 
 
@@ -80,9 +98,52 @@ int main(void){
 
 
 	while(1){
-		counterR = handlerPwmR.ptrTIMx->CCR2;
-		counterG = handlerPwmG.ptrTIMx->CCR3;
-		counterB = handlerPwmB.ptrTIMx->CCR4;
+
+
+		x = adcData[0]-2000;
+		y = adcData[1]-2000;
+		vectorArcUp = (180*atan2(y,x))/M_PI;
+		vectorArcDown =180+(180*atan2(-y,-x))/M_PI;
+
+
+		duttyUpR = (100*(vectorArcDown + 120))/120;
+		duttyUpG =  (100*vectorArcUp)/120;
+		duttyUpB1 = (100*(vectorArcUp-120))/120;
+		duttyUpB2 = (100*(vectorArcDown-120))/120;
+		duttyDownR = 100-(100*vectorArcUp)/120;
+		duttyDownG1 = 100-(100*(vectorArcUp-120))/120;
+		duttyDownG2 = 100-(100*(vectorArcDown-120))/120;
+		duttyDownB = 100-(100*(vectorArcDown+120))/120;
+
+
+
+
+
+		if (((x>-50) & (x<50)) & ((y>-50) & (y<50)) ){
+			updateDuttyCycle(&handlerPwmR, 100);
+			updateDuttyCycle(&handlerPwmG, 100);
+			updateDuttyCycle(&handlerPwmB, 100);
+
+
+		}else{
+			if ((vectorArcUp > 0) & (vectorArcUp < 120) ){
+				updateDuttyCycle(&handlerPwmR, duttyDownR);
+				updateDuttyCycle(&handlerPwmG, duttyUpG);
+				updateDuttyCycle(&handlerPwmB, 0);
+			}else if ((vectorArcUp > 120) & (vectorArcUp < 180) ){
+				updateDuttyCycle(&handlerPwmR, 0);
+				updateDuttyCycle(&handlerPwmG, duttyDownG1);
+				updateDuttyCycle(&handlerPwmB, duttyUpB1);
+			}else if ((vectorArcDown > 180) & (vectorArcDown < 240) ){
+				updateDuttyCycle(&handlerPwmR, 0);
+				updateDuttyCycle(&handlerPwmG, duttyDownG2);
+				updateDuttyCycle(&handlerPwmB, duttyUpB2);
+			}else if ((vectorArcDown > 240) & (vectorArcDown < 380) ){
+				updateDuttyCycle(&handlerPwmR, duttyUpR);
+				updateDuttyCycle(&handlerPwmG, 0);
+				updateDuttyCycle(&handlerPwmB, duttyDownB);
+			}
+		}
 
 
 
@@ -102,9 +163,16 @@ int main(void){
 
 		if (adcConvertion){
 			sprintf(bufferData1, "Vx = %u  ", adcData[0]);
-			sprintf(bufferData2, "Vy = %u \n \r", adcData[1]);
+			sprintf(bufferData2, "Vy = %u \n\r", adcData[1]);
 			writeMsg(&handlerUSART1, bufferData1);
 			writeMsg(&handlerUSART1, bufferData2);
+
+//			sprintf(bufferData1, "Angulo1 = %u  ", vectorArcUp);
+//			sprintf(bufferData2, "Angulo2 = %u \n \r", vectorArcDown);
+////			sprintf(bufferData3, "duttyB = %u   \n \r", duttyAumentoB);
+//			writeMsg(&handlerUSART1, bufferData1);
+//			writeMsg(&handlerUSART1, bufferData2);
+////			writeMsg(&handlerUSART1, bufferData3);
 			adcConvertion = RESET;
 		}
 		else{
@@ -112,38 +180,6 @@ int main(void){
 		}
 
 
-
-
-
-
-
-
-
-
-//		if (rxData == 'r'){
-//			if (counterR > 100){
-//				updateDuttyCycle(&handlerPwmR, 0);
-//			}else if(counterR <= 100) {
-//				updateDuttyCycle(&handlerPwmR, counterR + 1 );
-//			}
-//			rxData = '\0';
-//		}
-//		if (rxData == 'g'){
-//			if (counterG > 100){
-//				updateDuttyCycle(&handlerPwmG, 0);
-//			}else if(counterG <= 100) {
-//				updateDuttyCycle(&handlerPwmG, counterG + 1 );
-//			}
-//			rxData = '\0';
-//		}
-//		if (rxData == 'b'){
-//			if (counterB > 100){
-//				updateDuttyCycle(&handlerPwmB, 0);
-//			}else if(counterB <= 100) {
-//				updateDuttyCycle(&handlerPwmB, counterB + 1 );
-//			}
-//			rxData = '\0';
-//		}
 	}
 }
 
@@ -193,7 +229,7 @@ void inSystem (void){
     	handlerADCJoy.channelVector[i] = i;
     }
     handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
-    handlerADCJoy.resolution = ADC_RESOLUTION_8_BIT;
+    handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
     handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
     ADC_ConfigMultichannel(&handlerADCJoy, 2);
 

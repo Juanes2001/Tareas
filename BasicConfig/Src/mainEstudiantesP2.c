@@ -58,7 +58,7 @@ uint8_t i2cBuffer = 0;
 #define ACCEL_ZOUT_L  64
 
 #define PWR_MGMT_1    107
-#define WHO_AM_I      175
+#define WHO_AM_I      117
 
 
 /* Definición de prototipos de funciones */
