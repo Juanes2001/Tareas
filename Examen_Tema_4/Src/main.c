@@ -31,14 +31,16 @@ GPIO_Handler_t handlerPinR = {0};
 GPIO_Handler_t handlerPinG = {0};
 GPIO_Handler_t handlerPinB = {0};
 
+GPIO_Handler_t handlerI2cSCL = {0};
+GPIO_Handler_t handlerI2cSDA = {0};
+
 //Pin del blinky
 GPIO_Handler_t handlerLEDPin = {0};
 
-//handler para USART1
+//handler para USART1   //RECORDAR CAMBIAR EL CODIGO POR USART1, PINES A9 EN TX Y A10 EN RX, Y CAMBIAR EL CALLBACK POR CALBACK DE USART 1
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
-//PWM_Handler_t handlerADCPwm = {0};
 
 PWM_Handler_t handlerPwmR   = {0};
 PWM_Handler_t handlerPwmG   = {0};
@@ -47,6 +49,10 @@ PWM_Handler_t handlerPwmB   = {0};
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
 BasicTimer_Handler_t handlerADCTim = {0};
+
+//handlers I2C
+I2C_Handler_t handlerI2C1 = {0};
+
 
 
 
@@ -83,6 +89,12 @@ int16_t x = 0;
 int16_t y = 0;
 
 uint8_t rmax = 125;
+
+
+//Macros OLED
+
+#define ADDRESS 0b0111100
+
 
 
 
@@ -179,6 +191,28 @@ int main(void){
 			__NOP();
 		}
 
+		/*
+		 * OLED Code
+		 * Para Escribir sobre los registros de la OLED
+		 * primero debemos enviar un Byte de control para que los bytes siguientes sean bytes dirigidos hacia la memoria del
+		 * display (memoria RAM) o como bytes de comandos
+		 * Esto solo se hace para escribir datos sobre los registros
+		 *
+		 *  CASOS:
+		 *  	c0 = 0 el ultimo byte enviado es el ultimo byte de control, los demas seran
+		 *  	bytes de datos.
+		 *
+		 *  	c0 = 1 Los dos bytes siguientes seran uno de dato y otro byte de control
+		 *  			 *
+		 *  	D/C = 0 indica que los bytes de datos serán enviados como comandos para la pantalla
+		 *
+		 *  	D/C = 1 indica que los bytes de datos serán enviados a la memoria RAM
+		 */
+
+
+
+
+
 
 	}
 }
@@ -212,12 +246,6 @@ void inSystem (void){
 	BasicTimer_Config(&handlerADCTim);
 
 
-//	handlerADCPwm.ptrTIMx = TIM3;
-//	handlerADCPwm.config.channel = PWM_CHANNEL_1;
-//	handlerADCPwm.config.duttyCicle = 50;
-//	handlerADCPwm.config.periodo = 100;
-//	handlerADCPwm.config.prescaler = BTIMER_SPEED_100us;
-//	pwm_Config(&handlerADCPwm);
 	handlerADCTim.ptrTIMx = TIM4;
 	handlerADCTim.TIMx_Config.TIMx_interruptEnable = 1;
 	handlerADCTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
@@ -317,6 +345,34 @@ void inSystem (void){
 	handlerPwmB.config.periodo    = 100;
 	handlerPwmB.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmB);
+
+
+
+
+	//OLED display
+
+	handlerI2cSCL.pGPIOx                             = GPIOB;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinNumber      = PIN_6;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_OPENDRAIN;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLUP;
+	handlerI2cSCL.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerI2cSCL);
+
+	handlerI2cSDA.pGPIOx                             = GPIOB;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinNumber      = PIN_7;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_OPENDRAIN;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_PULLUP;
+	handlerI2cSDA.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerI2cSDA);
+
+	handlerI2C1.ptrI2Cx = I2C1;
+	handlerI2C1.modeI2C = I2C_MODE_FM;
+	handlerI2C1.slaveAddress = ADDRESS;
+	i2c_config(&handlerI2C1);
 
 
 }
