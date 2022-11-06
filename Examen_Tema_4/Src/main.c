@@ -68,12 +68,12 @@ void parseCommands(char *stringVector);
 
 //Variables necesarias para el programa
 uint32_t adcData[2];
-uint8_t adcConvertion = RESET;
+uint8_t adcFlag = RESET;
 uint8_t rxData = '\0';
 uint8_t counterR = 0;
 uint8_t counterG = 0;
 uint8_t counterB = 0;
-char cmd[16];
+char cmd[32];
 char userMsg[64];
 
 unsigned int firstParameter;
@@ -81,6 +81,7 @@ unsigned int secondParameter;
 unsigned int thirdParameter;
 
 char bufferReception[64];
+char bufferData1[64];
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
 uint8_t counterADC = 0;
@@ -100,6 +101,17 @@ int16_t x = 0;
 int16_t y = 0;
 
 uint8_t rmax = 125;
+
+uint8_t com1 = 0;
+uint8_t com2 = 0;
+uint8_t com3 = 0;
+uint8_t com4 = 0;
+uint8_t com5 = 0;
+uint8_t com6 = 0;
+uint8_t com7 = 0;
+uint8_t com8 = 0;
+uint8_t com9 = 0;
+uint8_t com10 = 0;
 
 
 //Macros OLED
@@ -168,6 +180,12 @@ int main(void){
 			}
 		}
 
+//		if (adcFlag){
+//			sprintf(bufferData1, "vx = %u   vy = %u \n \r", adcData[0],adcData[1]);
+//			writeMsg(&handlerUSART1, bufferData1);
+//			adcFlag = RESET;
+//		}
+
 
 
 		//COMANDOS
@@ -180,7 +198,8 @@ int main(void){
 			if (rxData == '@'){
 				doneTransaction = SET;
 
-				bufferReception[counterReception] = '\0';
+				//bufferReception[counterReception] = '\0';
+				writeMsg(&handlerUSART1, bufferReception);
 
 				counterReception = 0;
 
@@ -257,9 +276,9 @@ void inSystem (void){
 	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 
 
-    for (uint8_t i = 0 ; i < 2 ; i++){
-    	handlerADCJoy.channelVector[i] = i;
-    }
+
+    handlerADCJoy.channelVector[0] = 0;
+    handlerADCJoy.channelVector[1] = 1;
     handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
     handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
     handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
@@ -395,6 +414,10 @@ void adcComplete_Callback(void){
 		adcData[1] = getADC();
 	}
 
+	if ((counterADC % 2) == 0){
+		adcFlag = SET;
+	}
+
 
 }
 
@@ -409,34 +432,46 @@ void BasicTimer4_Callback(void){
 void parseCommands(char *stringVector){
 
 	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
+	com1 = strcmp(cmd, "startled") ;
+	com2 = strcmp(cmd, "p");
+	com3 = strcmp(cmd, "setled_period");
+	com4 = strcmp(cmd, "startdisplay");
+	com5 = strcmp(cmd, "stopdisplay");
+	com6 = strcmp(cmd, "print_msg");
+	com7 = strcmp(cmd, "printdate");
+	com8 = strcmp(cmd, "set_cronometer");
+	com9 = strcmp(cmd, "game");
+	com10 = strcmp(cmd, "movie");
+
+
 
 	if (strcmp(cmd, "help") == 0){
-		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");                             //0
-		writeMsg(&handlerUSART1, "1)  START_LED \n");                                //1
-		writeMsg(&handlerUSART1, "2)  SHUT_DOWN_LED \n");                            //2
-		writeMsg(&handlerUSART1, "3)  SET_LED_PERIOD #RnewPeriod #GnewPeriod #BnewPeriod \n");                //3
-		writeMsg(&handlerUSART1, "4)  START_DISPLAY \n");                            //4
-		writeMsg(&handlerUSART1, "5)  SHUT_DOWN_DISPLAY \n");                        //5
-		writeMsg(&handlerUSART1, "6)  PRINT_DISPLAY_MSG \n");                        //6
-		writeMsg(&handlerUSART1, "7)  PRINT_DISPLAY_DATE \n");                       //7
-		writeMsg(&handlerUSART1, "8)  SET_CRONOMETER #hours #minutes #seconds \n");  //8
-		writeMsg(&handlerUSART1, "9)  GAME \n");                                     //9
-		writeMsg(&handlerUSART1, "10) MOVIE \n");                                    //10
+		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");                                        //0
+		writeMsg(&handlerUSART1, "1)  startled \n");                                           //1
+		writeMsg(&handlerUSART1, "2)  p \n");                                            //2
+		writeMsg(&handlerUSART1, "3)  setled_period #RnewPeriod #GnewPeriod #BnewPeriod \n");  //3
+		writeMsg(&handlerUSART1, "4)  startdisplay \n");                                       //4
+		writeMsg(&handlerUSART1, "5)  stopdisplay \n");                                        //5
+		writeMsg(&handlerUSART1, "6)  print_msg \n");                                          //6
+		writeMsg(&handlerUSART1, "7)  printdate \n");                                          //7
+		writeMsg(&handlerUSART1, "8)  set_cronometer #hours #minutes #seconds \n");            //8
+		writeMsg(&handlerUSART1, "9)  game \n");                                               //9
+		writeMsg(&handlerUSART1, "10) movie \n");                                              //10
 
-	}else if (strcmp(cmd,"START_LED") == 0){
+	}else if (com1 == 0){
 		startTimer(&handlerADCTim);
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
 		startPwmSignal(&handlerPwmB);
 
 
-	}else if (strcmp(cmd,"SHUT_DOWN_LED") == 0){
+	}else if (com2  == 0){
 		stopTimer(&handlerADCTim);
 		stopPwmSignal(&handlerPwmR);
 		stopPwmSignal(&handlerPwmG);
 		stopPwmSignal(&handlerPwmB);
 	}
-	else if (strcmp(cmd,"SET_LED_PERIOD") == 0){
+	else if (com3 == 0){
 		updateFrequency(&handlerPwmR, firstParameter);
 		updateFrequency(&handlerPwmG, secondParameter);
 		updateFrequency(&handlerPwmB, thirdParameter);

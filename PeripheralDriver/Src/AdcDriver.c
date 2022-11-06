@@ -440,9 +440,6 @@ void ADC_ConfigMultichannel (ADC_Config_t *adcConfig, uint8_t numeroDeCanales){
 	//Activamos interrupciones cada fin de secuencia.
 	ADC1->CR2 |= ADC_CR2_EOCS;
 
-	//Activamos la interrucion para cada canal
-	//ADC1->CR2 &= ~ADC_CR2_EOCS;
-
 
 
 	/* 9. Configuramos el preescaler del ADC en 2:1 (el mas rápido que se puede tener */

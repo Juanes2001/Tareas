@@ -34,6 +34,12 @@ typedef struct
 
 }RTC_Config_t;
 
+typedef struct
+{
+	RTC_TypeDef *ptrRTC;
+	RTC_Config_t RTC_config;
+}RTC_Handler_t;
 
-void Rtc_Congif (RTC_Config_t *ptrHandlerRtc);
+
+void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc);
 
