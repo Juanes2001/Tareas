@@ -54,6 +54,7 @@ typedef struct
 	uint8_t USART_datasize;
 	uint8_t USART_parity;
 	uint8_t USART_stopbits;
+	uint8_t USART_parityError;
 
 }USART_Config_t;
 

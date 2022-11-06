@@ -190,6 +190,8 @@ int main(void){
 
 		//COMANDOS
 
+		// caracteres impares : _, c, e, f, i, j, l, o, q, r, t, w, x.
+
 
 		if (rxData != '\0'){
 			bufferReception[counterReception] = rxData;
@@ -305,14 +307,15 @@ void inSystem (void){
 	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRx);
 
-	handlerUSART1.ptrUSARTx                     = USART2;
-	handlerUSART1.USART_Config.USART_baudrate   = USART_BAUDRATE_28800;//37,7222 de Mantiza
-	handlerUSART1.USART_Config.USART_enableInRx = USART_INTERRUPT_RX_ENABLE;
-	handlerUSART1.USART_Config.USART_enableInTx = USART_INTERRUPT_TX_DISABLE;
-	handlerUSART1.USART_Config.USART_mode       = USART_MODE_RXTX;
-	handlerUSART1.USART_Config.USART_parity     = USART_PARITY_ODD;
-	handlerUSART1.USART_Config.USART_stopbits   = USART_STOPBIT_1;
-	handlerUSART1.USART_Config.USART_datasize   = USART_DATASIZE_9BIT;
+	handlerUSART1.ptrUSARTx                      = USART2;
+	handlerUSART1.USART_Config.USART_baudrate    = USART_BAUDRATE_28800;//37,7222 de Mantiza
+	handlerUSART1.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
+	handlerUSART1.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
+	handlerUSART1.USART_Config.USART_mode        = USART_MODE_RXTX;
+	handlerUSART1.USART_Config.USART_parity      = USART_PARITY_ODD;
+	handlerUSART1.USART_Config.USART_stopbits    = USART_STOPBIT_1;
+	handlerUSART1.USART_Config.USART_datasize    = USART_DATASIZE_9BIT;
+	handlerUSART1.USART_Config.USART_parityError = 1;
 	USART_Config(&handlerUSART1);
 
 
