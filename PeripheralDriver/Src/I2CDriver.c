@@ -247,55 +247,55 @@ void i2c_writeSingleRegister(I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, ui
 
 //OLED driver
 
-void i2c_OLEDwriteSingleRegister (I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, uint8_t newValue, uint8_t controlByte){
-	/* 0. Creamos una variable auxiliar para recribir el dato que leemos*/
-	uint8_t auxRead = 0;
-	uint8_t c0  = (controlByte & 0b10000000);
-	uint8_t D_C = (controlByte & 0b01000000);
-
-	switch(c0){
-		case 0:{
-			if (D_C == 0){
-				/* 1. Generamos la condicion Start */
-					i2c_startTransaction(ptrHandlerI2C);
-
-					/* 2. Enviamos la direccion del esclavo y la indicacion de ESCRIBIR */
-					i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
-
-					/* 3. Enviamos la direccion de memoria que deseamos escribir */
-					i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
-
-					/* 4. Enviamos el valor que deseamos escribir en el registro seleccionado */
-					i2c_sendDataByte (ptrHandlerI2C, newValue);
-
-					/* 5. Generamos la condicion Stop, para que el slave se detenga despues de 1 byte */
-					i2c_stopTransaction(ptrHandlerI2C);
-
-			}else if (D_C == 1){
-
-			}
-		}
-		case 1:{
-
-		}
-
-	}
-
-	/* 1. Generamos la condicion Start */
-	i2c_startTransaction(ptrHandlerI2C);
-
-	/* 2. Enviamos la direccion del esclavo y la indicacion de ESCRIBIR */
-	i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
-
-	/* 3. Enviamos la direccion de memoria que deseamos escribir */
-	i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
-
-	/* 4. Enviamos el valor que deseamos escribir en el registro seleccionado */
-	i2c_sendDataByte (ptrHandlerI2C, newValue);
-
-	/* 5. Generamos la condicion Stop, para que el slave se detenga despues de 1 byte */
-	i2c_stopTransaction(ptrHandlerI2C);
-}
-
+//void i2c_OLEDwriteSingleRegister (I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, uint8_t newValue, uint8_t controlByte){
+//	/* 0. Creamos una variable auxiliar para recribir el dato que leemos*/
+//	uint8_t auxRead = 0;
+//	uint8_t c0  = (controlByte & 0b10000000);
+//	uint8_t D_C = (controlByte & 0b01000000);
+//
+//	switch(c0){
+//		case 0:{
+//			if (D_C == 0){
+//				/* 1. Generamos la condicion Start */
+//					i2c_startTransaction(ptrHandlerI2C);
+//
+//					/* 2. Enviamos la direccion del esclavo y la indicacion de ESCRIBIR */
+//					i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
+//
+//					/* 3. Enviamos la direccion de memoria que deseamos escribir */
+//					i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
+//
+//					/* 4. Enviamos el valor que deseamos escribir en el registro seleccionado */
+//					i2c_sendDataByte (ptrHandlerI2C, newValue);
+//
+//					/* 5. Generamos la condicion Stop, para que el slave se detenga despues de 1 byte */
+//					i2c_stopTransaction(ptrHandlerI2C);
+//
+//			}else if (D_C == 1){
+//
+//			}
+//		}
+//		case 1:{
+//
+//		}
+//
+//	}
+//
+//	/* 1. Generamos la condicion Start */
+//	i2c_startTransaction(ptrHandlerI2C);
+//
+//	/* 2. Enviamos la direccion del esclavo y la indicacion de ESCRIBIR */
+//	i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
+//
+//	/* 3. Enviamos la direccion de memoria que deseamos escribir */
+//	i2c_sendMemoryAddress(ptrHandlerI2C, regToRead);
+//
+//	/* 4. Enviamos el valor que deseamos escribir en el registro seleccionado */
+//	i2c_sendDataByte (ptrHandlerI2C, newValue);
+//
+//	/* 5. Generamos la condicion Stop, para que el slave se detenga despues de 1 byte */
+//	i2c_stopTransaction(ptrHandlerI2C);
+//}
+//
 
 

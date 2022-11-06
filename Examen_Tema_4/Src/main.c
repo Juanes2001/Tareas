@@ -17,6 +17,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // configuracion USART que se usara = Serial_1, 28800, EVEN
 
@@ -58,6 +61,7 @@ I2C_Handler_t handlerI2C1 = {0};
 
 
 void inSystem (void);
+void parseCommands(char *stringVector);
 
 
 
@@ -69,9 +73,16 @@ uint8_t rxData = '\0';
 uint8_t counterR = 0;
 uint8_t counterG = 0;
 uint8_t counterB = 0;
-char bufferData1 [64];
-char bufferData2 [64];
-char bufferData3 [64];
+char cmd[16];
+char userMsg[64];
+
+unsigned int firstParameter;
+unsigned int secondParameter;
+unsigned int thirdParameter;
+
+char bufferReception[64];
+uint8_t counterReception = 0;
+uint8_t doneTransaction = RESET;
 uint8_t counterADC = 0;
 
 uint8_t duttyUpR = 0;
@@ -159,36 +170,29 @@ int main(void){
 
 
 
-		if (rxData == 's'){
-			startTimer(&handlerADCTim);
-			startPwmSignal(&handlerPwmR);
-			startPwmSignal(&handlerPwmG);
-			startPwmSignal(&handlerPwmB);
+		//COMANDOS
+
+
+		if (rxData != '\0'){
+			bufferReception[counterReception] = rxData;
+			counterReception++;
+
+			if (rxData == '@'){
+				doneTransaction = SET;
+
+				bufferReception[counterReception] = '\0';
+
+				counterReception = 0;
+
+			}
+
 			rxData = '\0';
-		}else if (rxData == 'p'){
-			stopTimer(&handlerADCTim);
-			stopPwmSignal(&handlerPwmR);
-			stopPwmSignal(&handlerPwmG);
-			stopPwmSignal(&handlerPwmB);
-			rxData = '\0';
+
 		}
 
-		if (adcConvertion){
-			sprintf(bufferData1, "Vx = %u  ", adcData[0]);
-			sprintf(bufferData2, "Vy = %u \n\r", adcData[1]);
-			writeMsg(&handlerUSART1, bufferData1);
-			writeMsg(&handlerUSART1, bufferData2);
-
-//			sprintf(bufferData1, "Angulo1 = %u  ", vectorArcUp);
-//			sprintf(bufferData2, "Angulo2 = %u \n \r", vectorArcDown);
-////			sprintf(bufferData3, "duttyB = %u   \n \r", duttyAumentoB);
-//			writeMsg(&handlerUSART1, bufferData1);
-//			writeMsg(&handlerUSART1, bufferData2);
-////			writeMsg(&handlerUSART1, bufferData3);
-			adcConvertion = RESET;
-		}
-		else{
-			__NOP();
+		if (doneTransaction){
+			parseCommands(bufferReception);
+			doneTransaction = RESET;
 		}
 
 		/*
@@ -391,10 +395,6 @@ void adcComplete_Callback(void){
 		adcData[1] = getADC();
 	}
 
-	if ((counterADC % 2) == 0){
-		adcConvertion = SET;
-	}
-
 
 }
 
@@ -404,5 +404,47 @@ void usart2Rx_Callback(void){
 
 void BasicTimer4_Callback(void){
 	startSingleADC();
+}
+
+void parseCommands(char *stringVector){
+
+	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
+
+	if (strcmp(cmd, "help") == 0){
+		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");                             //0
+		writeMsg(&handlerUSART1, "1)  START_LED \n");                                //1
+		writeMsg(&handlerUSART1, "2)  SHUT_DOWN_LED \n");                            //2
+		writeMsg(&handlerUSART1, "3)  SET_LED_PERIOD #RnewPeriod #GnewPeriod #BnewPeriod \n");                //3
+		writeMsg(&handlerUSART1, "4)  START_DISPLAY \n");                            //4
+		writeMsg(&handlerUSART1, "5)  SHUT_DOWN_DISPLAY \n");                        //5
+		writeMsg(&handlerUSART1, "6)  PRINT_DISPLAY_MSG \n");                        //6
+		writeMsg(&handlerUSART1, "7)  PRINT_DISPLAY_DATE \n");                       //7
+		writeMsg(&handlerUSART1, "8)  SET_CRONOMETER #hours #minutes #seconds \n");  //8
+		writeMsg(&handlerUSART1, "9)  GAME \n");                                     //9
+		writeMsg(&handlerUSART1, "10) MOVIE \n");                                    //10
+
+	}else if (strcmp(cmd,"START_LED") == 0){
+		startTimer(&handlerADCTim);
+		startPwmSignal(&handlerPwmR);
+		startPwmSignal(&handlerPwmG);
+		startPwmSignal(&handlerPwmB);
+
+
+	}else if (strcmp(cmd,"SHUT_DOWN_LED") == 0){
+		stopTimer(&handlerADCTim);
+		stopPwmSignal(&handlerPwmR);
+		stopPwmSignal(&handlerPwmG);
+		stopPwmSignal(&handlerPwmB);
+	}
+	else if (strcmp(cmd,"SET_LED_PERIOD") == 0){
+		updateFrequency(&handlerPwmR, firstParameter);
+		updateFrequency(&handlerPwmG, secondParameter);
+		updateFrequency(&handlerPwmB, thirdParameter);
+	}
+
+	else{
+		writeMsg(&handlerUSART1, "WRONG CMD, WRITE IT AGAING \n");
+	}
+
 }
 
