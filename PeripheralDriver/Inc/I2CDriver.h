@@ -52,7 +52,5 @@ uint8_t i2c_readSingleRegister (I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead)
 void i2c_writeSingleRegister (I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, uint8_t newValue);
 
 
-uint8_t i2c_OLEDreadSingleRegister(I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead);
-void i2c_OLEDwriteSingleRegister (I2C_Handler_t *ptrHandlerI2C, uint8_t regToRead, uint8_t newValue, uint8_t controlByte);
 #endif /* I2CDRIVER_H_ */
 

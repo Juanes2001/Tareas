@@ -42,4 +42,5 @@ typedef struct
 
 
 void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc);
+void Rtc_BDC_Convertion (RTC_Handler_t *ptrHandlerRtc);
 

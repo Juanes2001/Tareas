@@ -4,6 +4,7 @@
 "./Src/GPIOxDriver.o"
 "./Src/I2CDriver.o"
 "./Src/PwmDriver.o"
+"./Src/RTCDriver.o"
 "./Src/USARTxDriver.o"
 "./Src/syscalls.o"
 "./Src/sysmem.o"

@@ -13,6 +13,7 @@
 #include "PwmDriver.h"
 #include "I2CDriver.h"
 #include "AdcDriver.h"
+#include "OLEDDriver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -57,17 +58,12 @@ BasicTimer_Handler_t handlerADCTim = {0};
 I2C_Handler_t handlerI2C1 = {0};
 
 
-
-
-
 void inSystem (void);
 void parseCommands(char *stringVector);
 
 
-
-
 //Variables necesarias para el programa
-uint32_t adcData[2];
+uint32_t adcData[2] ;
 uint8_t adcFlag = RESET;
 uint8_t rxData = '\0';
 uint8_t counterR = 0;
@@ -76,15 +72,21 @@ uint8_t counterB = 0;
 char cmd[32];
 char userMsg[64];
 
+
+
 unsigned int firstParameter;
 unsigned int secondParameter;
 unsigned int thirdParameter;
 
 char bufferReception[64];
 char bufferData1[64];
+
+char bytesToSent[] = {0b10101111,0b00010101};
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
 uint8_t counterADC = 0;
+
+uint8_t setPWM = RESET;
 
 uint8_t duttyUpR = 0;
 uint8_t duttyUpG = 0;
@@ -112,6 +114,9 @@ uint8_t com7 = 0;
 uint8_t com8 = 0;
 uint8_t com9 = 0;
 uint8_t com10 = 0;
+
+uint8_t command1 = OLED_CONTROLBYTE_CONFIG;
+uint8_t command2 = OLED_CONTROLBYTE_DISPLAY;
 
 
 //Macros OLED
@@ -153,30 +158,33 @@ int main(void){
 
 
 
-
-		if (((x>-50) & (x<50)) & ((y>-50) & (y<50)) ){
-			updateDuttyCycle(&handlerPwmR, 100);
-			updateDuttyCycle(&handlerPwmG, 100);
-			updateDuttyCycle(&handlerPwmB, 100);
+		if (adcFlag){
 
 
-		}else{
-			if ((vectorArcUp > 0) & (vectorArcUp < 120) ){
-				updateDuttyCycle(&handlerPwmR, duttyDownR);
-				updateDuttyCycle(&handlerPwmG, duttyUpG);
-				updateDuttyCycle(&handlerPwmB, 0);
-			}else if ((vectorArcUp > 120) & (vectorArcUp < 180) ){
-				updateDuttyCycle(&handlerPwmR, 0);
-				updateDuttyCycle(&handlerPwmG, duttyDownG1);
-				updateDuttyCycle(&handlerPwmB, duttyUpB1);
-			}else if ((vectorArcDown > 180) & (vectorArcDown < 240) ){
-				updateDuttyCycle(&handlerPwmR, 0);
-				updateDuttyCycle(&handlerPwmG, duttyDownG2);
-				updateDuttyCycle(&handlerPwmB, duttyUpB2);
-			}else if ((vectorArcDown > 240) & (vectorArcDown < 380) ){
-				updateDuttyCycle(&handlerPwmR, duttyUpR);
-				updateDuttyCycle(&handlerPwmG, 0);
-				updateDuttyCycle(&handlerPwmB, duttyDownB);
+			if (((x>-50) & (x<50)) & ((y>-50) & (y<50)) ){
+				updateDuttyCycle(&handlerPwmR, 100);
+				updateDuttyCycle(&handlerPwmG, 100);
+				updateDuttyCycle(&handlerPwmB, 100);
+
+
+			}else{
+				if ((vectorArcUp > 0) & (vectorArcUp < 120) ){
+					updateDuttyCycle(&handlerPwmR, duttyDownR);
+					updateDuttyCycle(&handlerPwmG, duttyUpG);
+					updateDuttyCycle(&handlerPwmB, 0);
+				}else if ((vectorArcUp > 120) & (vectorArcUp < 180) ){
+					updateDuttyCycle(&handlerPwmR, 0);
+					updateDuttyCycle(&handlerPwmG, duttyDownG1);
+					updateDuttyCycle(&handlerPwmB, duttyUpB1);
+				}else if ((vectorArcDown > 180) & (vectorArcDown < 240) ){
+					updateDuttyCycle(&handlerPwmR, 0);
+					updateDuttyCycle(&handlerPwmG, duttyDownG2);
+					updateDuttyCycle(&handlerPwmB, duttyUpB2);
+				}else if ((vectorArcDown > 240) & (vectorArcDown < 380) ){
+					updateDuttyCycle(&handlerPwmR, duttyUpR);
+					updateDuttyCycle(&handlerPwmG, 0);
+					updateDuttyCycle(&handlerPwmB, duttyDownB);
+				}
 			}
 		}
 
@@ -200,7 +208,7 @@ int main(void){
 			if (rxData == '@'){
 				doneTransaction = SET;
 
-				//bufferReception[counterReception] = '\0';
+				bufferReception[counterReception] = '\n';
 				writeMsg(&handlerUSART1, bufferReception);
 
 				counterReception = 0;
@@ -372,9 +380,6 @@ void inSystem (void){
 	handlerPwmB.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmB);
 
-
-
-
 	//OLED display
 
 	handlerI2cSCL.pGPIOx                             = GPIOB;
@@ -400,6 +405,8 @@ void inSystem (void){
 	handlerI2C1.slaveAddress = ADDRESS;
 	i2c_config(&handlerI2C1);
 
+	sendBytes(&handlerI2C1, command1, bytesToSent);
+	sendBytes(&handlerI2C1, command2, bytesToSent);
 
 }
 
@@ -435,8 +442,8 @@ void BasicTimer4_Callback(void){
 void parseCommands(char *stringVector){
 
 	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
-	com1 = strcmp(cmd, "sl") ;
-	com2 = strcmp(cmd, "pl");
+	com1 = strcmp(cmd, "startled") ;
+	com2 = strcmp(cmd, "stopled");
 	com3 = strcmp(cmd, "setled_period");
 	com4 = strcmp(cmd, "startdisplay");
 	com5 = strcmp(cmd, "stopdisplay");
@@ -451,7 +458,7 @@ void parseCommands(char *stringVector){
 	if (strcmp(cmd, "help") == 0){
 		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");                                        //0
 		writeMsg(&handlerUSART1, "1)  startled \n");                                           //1
-		writeMsg(&handlerUSART1, "2)  p \n");                                            //2
+		writeMsg(&handlerUSART1, "2)  stopled \n");                                            //2
 		writeMsg(&handlerUSART1, "3)  setled_period #RnewPeriod #GnewPeriod #BnewPeriod \n");  //3
 		writeMsg(&handlerUSART1, "4)  startdisplay \n");                                       //4
 		writeMsg(&handlerUSART1, "5)  stopdisplay \n");                                        //5
@@ -466,6 +473,7 @@ void parseCommands(char *stringVector){
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
 		startPwmSignal(&handlerPwmB);
+		setPWM = SET;
 
 
 	}else if (com2  == 0){
@@ -473,11 +481,16 @@ void parseCommands(char *stringVector){
 		stopPwmSignal(&handlerPwmR);
 		stopPwmSignal(&handlerPwmG);
 		stopPwmSignal(&handlerPwmB);
+		setPWM = RESET;
 	}
 	else if (com3 == 0){
-		updateFrequency(&handlerPwmR, firstParameter);
-		updateFrequency(&handlerPwmG, secondParameter);
-		updateFrequency(&handlerPwmB, thirdParameter);
+		if (setPWM){
+			updateFrequency(&handlerPwmR, firstParameter);
+			updateFrequency(&handlerPwmG, secondParameter);
+			updateFrequency(&handlerPwmB, thirdParameter);
+		}else{
+			writeMsg(&handlerUSART1, "Turn on the LED first \n");
+		}
 	}
 
 	else{
