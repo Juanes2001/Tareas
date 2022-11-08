@@ -34,6 +34,8 @@ uint8_t Weekday = 0;
 uint32_t Time = 0;
 uint32_t Date = 0;
 
+uint8_t actualTime[7];
+
 
 
 void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc){
@@ -141,7 +143,7 @@ uint8_t actualTime[7] = {0};
 
 uint8_t *getDate(void){
 
-	unsigned char actualTime[7];
+
 
 
 	Time = RTC->TR;
