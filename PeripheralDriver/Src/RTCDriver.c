@@ -144,8 +144,6 @@ uint8_t actualTime[7] = {0};
 uint8_t *getDate(void){
 
 
-
-
 	Time = RTC->TR;
 	Date = RTC->DR;
 

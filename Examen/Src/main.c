@@ -42,7 +42,7 @@ GPIO_Handler_t handlerI2cSDA = {0};
 //Pin del blinky
 GPIO_Handler_t handlerLEDPin = {0};
 
-//handler para USART1   //RECORDAR CAMBIAR EL CODIGO POR USART1, PINES A9 EN TX Y A10 EN RX, Y CAMBIAR EL CALLBACK POR CALBACK DE USART 1
+//handler para USART1
 USART_Handler_t handlerUSART1 = {0};
 
 //handler para PWM
@@ -54,6 +54,7 @@ PWM_Handler_t handlerPwmB   = {0};
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
 BasicTimer_Handler_t handlerADCTim = {0};
+BasicTimer_Handler_t handlerDateTim = {0};
 
 //handlers I2C
 I2C_Handler_t handlerI2C1 = {0};
@@ -81,7 +82,6 @@ unsigned int secondParameter;
 unsigned int thirdParameter;
 
 char bufferReception[64];
-char bufferData1[64];
 
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
@@ -103,8 +103,6 @@ uint16_t vectorArcDown = 0;
 int16_t x = 0;
 int16_t y = 0;
 
-uint8_t rmax = 125;
-
 uint8_t com1 = 0;
 uint8_t com2 = 0;
 uint8_t com3 = 0;
@@ -115,30 +113,30 @@ uint8_t com7 = 0;
 uint8_t com8 = 0;
 uint8_t com9 = 0;
 uint8_t com10 = 0;
+uint8_t com11 = 0;
 
+uint8_t flagDate = RESET;
+
+char date[16];
+
+uint8_t  sec = 0;
+uint8_t  min = 0;
+uint8_t  hours = 0;
+
+uint8_t setScrollIN = RESET;
+uint8_t setScrollOUT = RESET;
+uint8_t setScrollUP = RESET;
+uint8_t setScrollDOWN = RESET;
 
 
 //ADDRESS OLED
 
 #define ADDRESS 0b0111100
 
-
-
-
-
-
-
-
+//Este es el corazon del programa donde se ejecuta todo
 int main(void){
 
 	inSystem();
-
-
-
-
-
-
-
 
 
 	while(1){
@@ -161,14 +159,22 @@ int main(void){
 		duttyDownB = 100-(100*(vectorArcDown+120))/120;
 
 
-//		if (setScroll){
-//			counter++;
-//			setLineAddress(&handlerI2C1, counter);
-//			if (counter == 64){
-//				counter = 0;
-//			}
-//			setScroll = RESET;
-//		}
+		if (setScrollUP){
+			counter++;
+			setLineAddress(&handlerI2C1, counter);
+			if (counter == 64){
+				counter = 0;
+			}
+			setScrollUP=RESET;
+		}else if (setScrollDOWN){
+			setLineAddress(&handlerI2C1, 64-counter);
+			counter++;
+			if (counter == 63){
+				counter = 0;
+			}
+			setScrollUP=RESET;
+
+		}
 
 
 		if (adcFlag){
@@ -213,8 +219,7 @@ int main(void){
 			if (rxData == '@'){
 				doneTransaction = SET;
 
-				bufferReception[counterReception] = '\n';
-				writeMsg(&handlerUSART1, bufferReception);
+				bufferReception[counterReception] = '\0';
 
 				counterReception = 0;
 
@@ -229,25 +234,15 @@ int main(void){
 			doneTransaction = RESET;
 		}
 
-		/*
-		 * OLED Code
-		 * Para Escribir sobre los registros de la OLED
-		 * primero debemos enviar un Byte de control para que los bytes siguientes sean bytes dirigidos hacia la memoria del
-		 * display (memoria RAM) o como bytes de comandos
-		 * Esto solo se hace para escribir datos sobre los registros
-		 *
-		 *  CASOS:
-		 *  	c0 = 0 el ultimo byte enviado es el ultimo byte de control, los demas seran
-		 *  	bytes de datos.
-		 *
-		 *  	c0 = 1 Los dos bytes siguientes seran uno de dato y otro byte de control
-		 *  			 *
-		 *  	D/C = 0 indica que los bytes de datos serán enviados como comandos para la pantalla
-		 *
-		 *  	D/C = 1 indica que los bytes de datos serán enviados a la memoria RAM
-		 */
+		if (flagDate){
+			sec = *(getDate());
+			min = *(getDate()+1);
+			hours = *(getDate()+2);
 
-
+			sprintf(date, "%u:%u:%u",hours,min,sec);
+			drawMSG(&handlerI2C1, date, sizeof(date));
+			flagDate = RESET;
+		}
 
 
 
@@ -256,6 +251,10 @@ int main(void){
 }
 
 void inSystem (void){
+
+	//Descripcion de la configuracion
+
+	//BLINKY LED
 
 	handlerLEDPin.pGPIOx = GPIOA;
 	handlerLEDPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
@@ -307,7 +306,7 @@ void inSystem (void){
     handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
     handlerPinTx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
     handlerPinTx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-    handlerPinTx.GPIO_PinConfig.GPIO_PinNumber      = PIN_2;
+    handlerPinTx.GPIO_PinConfig.GPIO_PinNumber      = PIN_9;
     handlerPinTx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
     handlerPinTx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinTx);
@@ -317,12 +316,12 @@ void inSystem (void){
 	handlerPinRx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber      = PIN_3;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber      = PIN_10;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRx);
 
-	handlerUSART1.ptrUSARTx                      = USART2;
+	handlerUSART1.ptrUSARTx                      = USART1;
 	handlerUSART1.USART_Config.USART_baudrate    = USART_BAUDRATE_9600;//37,7222 de Mantiza
 	handlerUSART1.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
 	handlerUSART1.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
@@ -332,6 +331,9 @@ void inSystem (void){
 	handlerUSART1.USART_Config.USART_datasize    = USART_DATASIZE_9BIT;
 	handlerUSART1.USART_Config.USART_parityError = 0;
 	USART_Config(&handlerUSART1);
+
+
+	//Configuracion de pines y timers para PWM
 
 
 	handlerPinR.pGPIOx                             = GPIOC;
@@ -388,8 +390,7 @@ void inSystem (void){
 	pwm_Config(&handlerPwmB);
 
 
-
-	//RTC config
+    //Configuracion del RTC
 	handlerRTC.RTC_config.rtcDay = 8;
 	handlerRTC.RTC_config.rtcHours = 0;
 	handlerRTC.RTC_config.rtcMinutes = 0;
@@ -399,7 +400,7 @@ void inSystem (void){
 	handlerRTC.RTC_config.rtcYear= 22;
 	Rtc_Congif(&handlerRTC);
 
-	//OLED display
+	//OLED display por comunicacion I2C
 
 	handlerI2cSCL.pGPIOx                             = GPIOB;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
@@ -424,15 +425,47 @@ void inSystem (void){
 	handlerI2C1.slaveAddress = ADDRESS;
 	i2c_config(&handlerI2C1);
 
+	//Timer 5 para interrupciones del comando para cronometro
+
+
+
+	handlerDateTim.ptrTIMx = TIM5;
+	handlerDateTim.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerDateTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerDateTim.TIMx_Config.TIMx_period = 10000;
+	handlerDateTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerDateTim);
+
+	startTimer(&handlerDateTim);
+
+
 
 
 }
 
 
-
+// Callback para el blynky y el comando Scroll UP y DOWN
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerLEDPin);
+	if (!(setScrollOUT)){
+
+		if (setScrollIN){
+			setScrollUP = SET;
+		}else{
+			setScrollDOWN = SET;
+		}
+	}else{
+		__NOP();
+	}
 }
+
+//Callback para el comando del cronometro
+
+void BasicTimer5_Callback(void){
+	flagDate = SET;
+}
+
+//Callback para interrupciones posterior a la multiconversion
 
 void adcComplete_Callback(void){
 	counterADC++;
@@ -449,13 +482,20 @@ void adcComplete_Callback(void){
 
 }
 
-void usart2Rx_Callback(void){
+//Calback para recepciones por coolterm
+
+void usart1Rx_Callback(void){
 	rxData = getRxData();
 }
+
+//Callback para comando de setear conversion ADC y LED RGB
 
 void BasicTimer4_Callback(void){
 	startSingleADC();
 }
+
+
+//Funcion ejecutadora de comandos
 
 void parseCommands(char *stringVector){
 
@@ -470,6 +510,7 @@ void parseCommands(char *stringVector){
 	com8 = strcmp(cmd, "print_date");
 	com9 = strcmp(cmd, "set_cronometer");
 	com10 = strcmp(cmd, "scroll");
+	com11 = strcmp(cmd, "clear_dysplay");
 
 
 
@@ -482,13 +523,13 @@ void parseCommands(char *stringVector){
 		writeMsg(&handlerUSART1, "5)  start_display \n");
 		writeMsg(&handlerUSART1, "6)  stop_display \n");
 		writeMsg(&handlerUSART1, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
-		writeMsg(&handlerUSART1, "8)  print_date \n");                                           //8
-		writeMsg(&handlerUSART1, "9)  set_cronometer #hours #minutes #seconds \n");            //9
-		writeMsg(&handlerUSART1, "10) scroll #1=UP, #0=DOWN \n");                                //10
-		writeMsg(&handlerUSART1, "11) set_time #hours #minutes #seconds \n");                 //11
-		writeMsg(&handlerUSART1, "12) movie \n");                                              //12
+		writeMsg(&handlerUSART1, "8)  print_date \n");
+		writeMsg(&handlerUSART1, "9)  set_cronometer #hours #minutes #seconds \n");
+		writeMsg(&handlerUSART1, "10) scroll #1=UP or 0=DOWN \n");
+		writeMsg(&handlerUSART1, "11) clear_dysplay \n");
 
-	}else if (com1 == 0){
+	}
+	else if (com1 == 0){
 		startTimer(&handlerADCTim);
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
@@ -496,7 +537,8 @@ void parseCommands(char *stringVector){
 		setPWM = SET;
 
 
-	}else if (com2  == 0){
+	}
+	else if (com2  == 0){
 		stopTimer(&handlerADCTim);
 		stopPwmSignal(&handlerPwmR);
 		stopPwmSignal(&handlerPwmG);
@@ -549,13 +591,53 @@ void parseCommands(char *stringVector){
 
 
 	}
-//	else if (com8 == 0){
-//		stopOLED(&handlerI2C1);
-//
-//	}
+	else if (com8 == 0){
+		handlerRTC.RTC_config.rtcDay = 8;
+		handlerRTC.RTC_config.rtcHours = firstParameter;
+		handlerRTC.RTC_config.rtcMinutes = secondParameter;
+		handlerRTC.RTC_config.rtcMonth = 11;
+		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
+		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+		handlerRTC.RTC_config.rtcYear= 22;
+		Rtc_Congif(&handlerRTC);
+
+		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
+
+		drawMSG(&handlerI2C1, date, sizeof(date));
 
 
+	}
+	else if (com9 == 0){
+		handlerRTC.RTC_config.rtcDay = 8;
+		handlerRTC.RTC_config.rtcHours = 0;
+		handlerRTC.RTC_config.rtcMinutes = 0;
+		handlerRTC.RTC_config.rtcMonth = 11;
+		handlerRTC.RTC_config.rtcSeconds =0;
+		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+		handlerRTC.RTC_config.rtcYear= 22;
+		Rtc_Congif(&handlerRTC);
 
+		startTimer(&handlerDateTim);
+
+
+	}
+	else if (com10 == 0){
+		setScrollOUT = RESET;
+		if (firstParameter == SET){
+			setScrollIN =SET;
+
+		}else{
+			setScrollIN =RESET;
+		}
+
+
+	}
+	else if (com11 == 0){
+		clearDisplay(&handlerI2C1);
+		setScrollOUT = SET;
+
+
+	}
 	else{
 		writeMsg(&handlerUSART1, "WRONG CMD, WRITE IT AGAING \n");
 	}

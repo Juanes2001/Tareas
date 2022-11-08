@@ -13,6 +13,8 @@
 #include "PwmDriver.h"
 #include "I2CDriver.h"
 #include "AdcDriver.h"
+#include "OLEDDriver.h"
+#include "RTCDriver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,29 +54,28 @@ PWM_Handler_t handlerPwmB   = {0};
 //Handlers de Timers
 BasicTimer_Handler_t handlerLEDTim = {0};
 BasicTimer_Handler_t handlerADCTim = {0};
+BasicTimer_Handler_t handlerDateTim = {0};
 
 //handlers I2C
 I2C_Handler_t handlerI2C1 = {0};
 
-
-
+//handler para el tiempo actual
+RTC_Handler_t handlerRTC = {0};
 
 
 void inSystem (void);
 void parseCommands(char *stringVector);
 
 
-
-
 //Variables necesarias para el programa
-uint32_t adcData[2];
+uint32_t adcData[2] ;
 uint8_t adcFlag = RESET;
 uint8_t rxData = '\0';
-uint8_t counterR = 0;
-uint8_t counterG = 0;
-uint8_t counterB = 0;
+uint8_t counter = 0;
 char cmd[32];
 char userMsg[64];
+
+
 
 unsigned int firstParameter;
 unsigned int secondParameter;
@@ -82,9 +83,12 @@ unsigned int thirdParameter;
 
 char bufferReception[64];
 char bufferData1[64];
+
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
 uint8_t counterADC = 0;
+
+uint8_t setPWM = RESET;
 
 uint8_t duttyUpR = 0;
 uint8_t duttyUpG = 0;
@@ -113,11 +117,19 @@ uint8_t com8 = 0;
 uint8_t com9 = 0;
 uint8_t com10 = 0;
 
+uint8_t flagDate = RESET;
 
-//Macros OLED
+char date[16];
+
+uint8_t  sec = 0;
+uint8_t  min = 0;
+uint8_t  hours = 0;
+
+
+
+//ADDRESS OLED
 
 #define ADDRESS 0b0111100
-
 
 
 
@@ -131,8 +143,8 @@ int main(void){
 	inSystem();
 
 
-
 	while(1){
+
 
 
 		x = adcData[0]-2000;
@@ -151,46 +163,49 @@ int main(void){
 		duttyDownB = 100-(100*(vectorArcDown+120))/120;
 
 
+//		if (setScroll){
+//			counter++;
+//			setLineAddress(&handlerI2C1, counter);
+//			if (counter == 64){
+//				counter = 0;
+//			}
+//			setScroll = RESET;
+//		}
 
 
-
-		if (((x>-50) & (x<50)) & ((y>-50) & (y<50)) ){
-			updateDuttyCycle(&handlerPwmR, 100);
-			updateDuttyCycle(&handlerPwmG, 100);
-			updateDuttyCycle(&handlerPwmB, 100);
+		if (adcFlag){
 
 
-		}else{
-			if ((vectorArcUp > 0) & (vectorArcUp < 120) ){
-				updateDuttyCycle(&handlerPwmR, duttyDownR);
-				updateDuttyCycle(&handlerPwmG, duttyUpG);
-				updateDuttyCycle(&handlerPwmB, 0);
-			}else if ((vectorArcUp > 120) & (vectorArcUp < 180) ){
-				updateDuttyCycle(&handlerPwmR, 0);
-				updateDuttyCycle(&handlerPwmG, duttyDownG1);
-				updateDuttyCycle(&handlerPwmB, duttyUpB1);
-			}else if ((vectorArcDown > 180) & (vectorArcDown < 240) ){
-				updateDuttyCycle(&handlerPwmR, 0);
-				updateDuttyCycle(&handlerPwmG, duttyDownG2);
-				updateDuttyCycle(&handlerPwmB, duttyUpB2);
-			}else if ((vectorArcDown > 240) & (vectorArcDown < 380) ){
-				updateDuttyCycle(&handlerPwmR, duttyUpR);
-				updateDuttyCycle(&handlerPwmG, 0);
-				updateDuttyCycle(&handlerPwmB, duttyDownB);
+			if (((x>-50) & (x<50)) & ((y>-50) & (y<50)) ){
+				updateDuttyCycle(&handlerPwmR, 100);
+				updateDuttyCycle(&handlerPwmG, 100);
+				updateDuttyCycle(&handlerPwmB, 100);
+
+
+			}else{
+				if ((vectorArcUp > 0) & (vectorArcUp < 120) ){
+					updateDuttyCycle(&handlerPwmR, duttyDownR);
+					updateDuttyCycle(&handlerPwmG, duttyUpG);
+					updateDuttyCycle(&handlerPwmB, 0);
+				}else if ((vectorArcUp > 120) & (vectorArcUp < 180) ){
+					updateDuttyCycle(&handlerPwmR, 0);
+					updateDuttyCycle(&handlerPwmG, duttyDownG1);
+					updateDuttyCycle(&handlerPwmB, duttyUpB1);
+				}else if ((vectorArcDown > 180) & (vectorArcDown < 240) ){
+					updateDuttyCycle(&handlerPwmR, 0);
+					updateDuttyCycle(&handlerPwmG, duttyDownG2);
+					updateDuttyCycle(&handlerPwmB, duttyUpB2);
+				}else if ((vectorArcDown > 240) & (vectorArcDown < 380) ){
+					updateDuttyCycle(&handlerPwmR, duttyUpR);
+					updateDuttyCycle(&handlerPwmG, 0);
+					updateDuttyCycle(&handlerPwmB, duttyDownB);
+				}
 			}
 		}
-
-//		if (adcFlag){
-//			sprintf(bufferData1, "vx = %u   vy = %u \n \r", adcData[0],adcData[1]);
-//			writeMsg(&handlerUSART1, bufferData1);
-//			adcFlag = RESET;
-//		}
 
 
 
 		//COMANDOS
-
-		// caracteres impares : _, c, e, f, i, j, l, o, q, r, t, w, x.
 
 
 		if (rxData != '\0'){
@@ -200,7 +215,7 @@ int main(void){
 			if (rxData == '@'){
 				doneTransaction = SET;
 
-				//bufferReception[counterReception] = '\0';
+				bufferReception[counterReception] = '\n';
 				writeMsg(&handlerUSART1, bufferReception);
 
 				counterReception = 0;
@@ -216,25 +231,15 @@ int main(void){
 			doneTransaction = RESET;
 		}
 
-		/*
-		 * OLED Code
-		 * Para Escribir sobre los registros de la OLED
-		 * primero debemos enviar un Byte de control para que los bytes siguientes sean bytes dirigidos hacia la memoria del
-		 * display (memoria RAM) o como bytes de comandos
-		 * Esto solo se hace para escribir datos sobre los registros
-		 *
-		 *  CASOS:
-		 *  	c0 = 0 el ultimo byte enviado es el ultimo byte de control, los demas seran
-		 *  	bytes de datos.
-		 *
-		 *  	c0 = 1 Los dos bytes siguientes seran uno de dato y otro byte de control
-		 *  			 *
-		 *  	D/C = 0 indica que los bytes de datos serán enviados como comandos para la pantalla
-		 *
-		 *  	D/C = 1 indica que los bytes de datos serán enviados a la memoria RAM
-		 */
+		if (flagDate){
+			sec = *(getDate());
+			min = *(getDate()+1);
+			hours = *(getDate()+2);
 
-
+			sprintf(date, "%u:%u:%u",hours,min,sec);
+			drawMSG(&handlerI2C1, date, sizeof(date));
+			flagDate = RESET;
+		}
 
 
 
@@ -243,6 +248,16 @@ int main(void){
 }
 
 void inSystem (void){
+
+	handlerLEDPin.pGPIOx = GPIOA;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerLEDPin);
+	GPIO_WritePin(&handlerLEDPin, SET);
 
 	handlerLEDTim.ptrTIMx = TIM2;
 	handlerLEDTim.TIMx_Config.TIMx_interruptEnable = 1;
@@ -253,14 +268,6 @@ void inSystem (void){
 
 	startTimer(&handlerLEDTim);
 
-	handlerLEDPin.pGPIOx = GPIOA;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerLEDPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerLEDPin);
 
 	//Conversion del JOYSTICK
 	handlerADCTim.ptrTIMx = TIM4;
@@ -315,7 +322,7 @@ void inSystem (void){
 	handlerUSART1.USART_Config.USART_parity      = USART_PARITY_ODD;
 	handlerUSART1.USART_Config.USART_stopbits    = USART_STOPBIT_1;
 	handlerUSART1.USART_Config.USART_datasize    = USART_DATASIZE_9BIT;
-	handlerUSART1.USART_Config.USART_parityError = 1;
+	handlerUSART1.USART_Config.USART_parityError = 0;
 	USART_Config(&handlerUSART1);
 
 
@@ -374,6 +381,15 @@ void inSystem (void){
 
 
 
+	//RTC config
+	handlerRTC.RTC_config.rtcDay = 8;
+	handlerRTC.RTC_config.rtcHours = 0;
+	handlerRTC.RTC_config.rtcMinutes = 0;
+	handlerRTC.RTC_config.rtcMonth = 11;
+	handlerRTC.RTC_config.rtcSeconds =0;
+	handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+	handlerRTC.RTC_config.rtcYear= 22;
+	Rtc_Congif(&handlerRTC);
 
 	//OLED display
 
@@ -401,12 +417,28 @@ void inSystem (void){
 	i2c_config(&handlerI2C1);
 
 
+	handlerDateTim.ptrTIMx = TIM5;
+	handlerDateTim.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerDateTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerDateTim.TIMx_Config.TIMx_period = 10000;
+	handlerDateTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerDateTim);
+
+	startTimer(&handlerDateTim);
+
+
+
+
 }
 
 
 
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerLEDPin);
+}
+
+void BasicTimer5_Callback(void){
+	flagDate = SET;
 }
 
 void adcComplete_Callback(void){
@@ -435,37 +467,38 @@ void BasicTimer4_Callback(void){
 void parseCommands(char *stringVector){
 
 	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
-	com1 = strcmp(cmd, "sl") ;
-	com2 = strcmp(cmd, "pl");
-	com3 = strcmp(cmd, "setled_period");
-	com4 = strcmp(cmd, "startdisplay");
-	com5 = strcmp(cmd, "stopdisplay");
-	com6 = strcmp(cmd, "print_msg");
-	com7 = strcmp(cmd, "printdate");
-	com8 = strcmp(cmd, "set_cronometer");
-	com9 = strcmp(cmd, "game");
-	com10 = strcmp(cmd, "movie");
+	com1 = strcmp(cmd, "startLED") ;
+	com2 = strcmp(cmd, "stopLED");
+	com3 = strcmp(cmd, "setLED_period");
+	com4 = strcmp(cmd, "resetLED_period");
+	com5 = strcmp(cmd, "start_display");
+	com6 = strcmp(cmd, "stop_display");
+	com7 = strcmp(cmd, "print_msg");
+	com8 = strcmp(cmd, "print_date");
+	com9 = strcmp(cmd, "set_cronometer");
+	com10 = strcmp(cmd, "scroll");
 
 
 
 	if (strcmp(cmd, "help") == 0){
-		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");                                        //0
-		writeMsg(&handlerUSART1, "1)  startled \n");                                           //1
-		writeMsg(&handlerUSART1, "2)  p \n");                                            //2
-		writeMsg(&handlerUSART1, "3)  setled_period #RnewPeriod #GnewPeriod #BnewPeriod \n");  //3
-		writeMsg(&handlerUSART1, "4)  startdisplay \n");                                       //4
-		writeMsg(&handlerUSART1, "5)  stopdisplay \n");                                        //5
-		writeMsg(&handlerUSART1, "6)  print_msg \n");                                          //6
-		writeMsg(&handlerUSART1, "7)  printdate \n");                                          //7
-		writeMsg(&handlerUSART1, "8)  set_cronometer #hours #minutes #seconds \n");            //8
-		writeMsg(&handlerUSART1, "9)  game \n");                                               //9
-		writeMsg(&handlerUSART1, "10) movie \n");                                              //10
+		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");
+		writeMsg(&handlerUSART1, "1)  startLED \n");
+		writeMsg(&handlerUSART1, "2)  stopLED \n");
+		writeMsg(&handlerUSART1, "3)  setLED_period #RnewPeriod #GnewPeriod #BnewPeriod \n");
+ 		writeMsg(&handlerUSART1, "4)  resetLED_period \n");
+		writeMsg(&handlerUSART1, "5)  start_display \n");
+		writeMsg(&handlerUSART1, "6)  stop_display \n");
+		writeMsg(&handlerUSART1, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
+		writeMsg(&handlerUSART1, "8)  print_date \n");
+		writeMsg(&handlerUSART1, "9)  set_cronometer #hours #minutes #seconds \n");
+		writeMsg(&handlerUSART1, "10) scroll #1=UP, #0=DOWN \n");
 
 	}else if (com1 == 0){
 		startTimer(&handlerADCTim);
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
 		startPwmSignal(&handlerPwmB);
+		setPWM = SET;
 
 
 	}else if (com2  == 0){
@@ -473,12 +506,94 @@ void parseCommands(char *stringVector){
 		stopPwmSignal(&handlerPwmR);
 		stopPwmSignal(&handlerPwmG);
 		stopPwmSignal(&handlerPwmB);
+		setPWM = RESET;
 	}
 	else if (com3 == 0){
-		updateFrequency(&handlerPwmR, firstParameter);
-		updateFrequency(&handlerPwmG, secondParameter);
-		updateFrequency(&handlerPwmB, thirdParameter);
+		if (setPWM){
+			updateFrequency(&handlerPwmR, firstParameter);
+			updateFrequency(&handlerPwmG, secondParameter);
+			updateFrequency(&handlerPwmB, thirdParameter);
+		}else{
+			writeMsg(&handlerUSART1, "Turn on the LED first \n");
+		}
 	}
+	else if (com4 == 0){
+			updateFrequency(&handlerPwmR, 10);
+			updateFrequency(&handlerPwmG, 10);
+			updateFrequency(&handlerPwmB, 10);
+
+	}
+	else if (com5 == 0){
+		startOLED(&handlerI2C1);
+		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
+
+	}
+	else if (com6 == 0){
+		stopOLED(&handlerI2C1);
+
+	}
+	else if (com7 == 0){
+		uint8_t i =0;
+		uint8_t flag = RESET;
+		while (*(userMsg+i)!='\0'){
+			if ((*(userMsg+i) <= 122) & (*(userMsg+i) >= 97)){
+				flag = SET;
+				break;
+			}else{
+				__NOP();
+			}
+		}
+
+		if (flag){
+			writeMsg(&handlerUSART1, "REWRITE MESSAGE IN CAPITAL LETTER \n");
+		}else{
+			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
+			flag = RESET;
+		}
+
+
+
+	}
+	else if (com8 == 0){
+		handlerRTC.RTC_config.rtcDay = 8;
+		handlerRTC.RTC_config.rtcHours = firstParameter;
+		handlerRTC.RTC_config.rtcMinutes = secondParameter;
+		handlerRTC.RTC_config.rtcMonth = 11;
+		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
+		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+		handlerRTC.RTC_config.rtcYear= 22;
+		Rtc_Congif(&handlerRTC);
+
+		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
+
+		drawMSG(&handlerI2C1, date, sizeof(date));
+
+
+	}	else if (com9 == 0){
+		handlerRTC.RTC_config.rtcDay = 8;
+		handlerRTC.RTC_config.rtcHours = 0;
+		handlerRTC.RTC_config.rtcMinutes = 0;
+		handlerRTC.RTC_config.rtcMonth = 11;
+		handlerRTC.RTC_config.rtcSeconds =0;
+		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+		handlerRTC.RTC_config.rtcYear= 22;
+		Rtc_Congif(&handlerRTC);
+
+		startTimer(&handlerDateTim);
+
+
+	}else if (com10 == 0){
+		if (firstParameter == SET){
+
+
+		}else{
+
+		}
+
+
+	}
+
+
 
 	else{
 		writeMsg(&handlerUSART1, "WRONG CMD, WRITE IT AGAING \n");

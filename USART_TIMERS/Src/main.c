@@ -159,6 +159,7 @@ void inSystem (void){
 	handlerTIM2.TIMx_Config.TIMx_interruptEnable=1;
 
 	BasicTimer_Config(&handlerTIM2);
+	startTimer(&handlerTIM2);
 
 	/*
 	 * Configuramos el USART_1 con una velocidad de 115200 baulios, incluyendo paridad y 1 solo bit de parada.
