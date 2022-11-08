@@ -8,6 +8,34 @@
 
 #include "RTCDriver.h"
 
+
+uint8_t HU  = 0;
+uint8_t HD  = 0;
+uint8_t MU  = 0;
+uint8_t MD  = 0;
+uint8_t SU  = 0;
+uint8_t SD  = 0;
+uint8_t MoU = 0;
+uint8_t MoD = 0;
+uint8_t DU  = 0;
+uint8_t DD  = 0;
+uint8_t YU  = 0;
+uint8_t YD  = 0;
+
+
+uint8_t Hour  = 0;
+uint8_t Minutes = 0;
+uint8_t Seconds = 0;
+uint8_t Year = 0;
+uint8_t Month = 0;
+uint16_t Day = 0;
+uint8_t Weekday = 0;
+
+uint32_t Time = 0;
+uint32_t Date = 0;
+
+
+
 void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc){
 	//Activamos el PWR parapoder desactivar su sistema de bloqueo en el RTC
 	RCC->APB1ENR = RCC_APB1ENR_PWREN;
@@ -47,6 +75,41 @@ void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc){
 
 	Rtc_BDC_Convertion(ptrHandlerRtc);
 
+	//Sincronizamos el contador del calendario con los valores iniciales puestos en los registros de la hora
+	ptrHandlerRtc->ptrRTC->CR |= RTC_CR_BYPSHAD;
+
+	//Seteamos la hora, minutos y segundos
+	ptrHandlerRtc->ptrRTC->TR = 0;
+
+	//Seteamos el formato de 24 horas
+	ptrHandlerRtc->ptrRTC->TR &= ~(RTC_TR_PM);
+
+	ptrHandlerRtc->ptrRTC->TR |= (SU << RTC_TR_SU_Pos);
+	ptrHandlerRtc->ptrRTC->TR |= (SD << RTC_TR_ST_Pos);
+	ptrHandlerRtc->ptrRTC->TR |= (MU << RTC_TR_MNU_Pos);
+	ptrHandlerRtc->ptrRTC->TR |= (MD << RTC_TR_MNT_Pos);
+	ptrHandlerRtc->ptrRTC->TR |= (HU << RTC_TR_HU_Pos);
+	ptrHandlerRtc->ptrRTC->TR |= (HD << RTC_TR_HT_Pos);
+
+	//Seteamos la fecha, dias, mes y año
+
+	ptrHandlerRtc->ptrRTC->DR = 0;
+
+	ptrHandlerRtc->ptrRTC->DR |= (DU << RTC_DR_DU_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (DD << RTC_DR_DT_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (MoU << RTC_DR_MU_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (MoD << RTC_DR_MT_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (ptrHandlerRtc->RTC_config.rtcWeekDay << RTC_DR_WDU_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (YU << RTC_DR_YU_Pos);
+	ptrHandlerRtc->ptrRTC->DR |= (YD << RTC_DR_YT_Pos);
+
+	//Salimos del modo INIT de inicializacion
+	RCC->BDCR |= RCC_BDCR_RTCEN;
+	RTC->ISR &= ~RTC_ISR_INIT;
+	PWR->CR &= ~ PWR_CR_DBP;
+
+	RTC->CR &= ~RTC_CR_BYPSHAD;
+	RTC->WPR = (0xFF); // Key Lock write protection
 
 
 
@@ -54,18 +117,51 @@ void Rtc_Congif (RTC_Handler_t *ptrHandlerRtc){
 
  void Rtc_BDC_Convertion (RTC_Handler_t *ptrHandlerRtc){
 	// convertimos el formato de horas en BDC
-	 uint8_t HU = (ptrHandlerRtc->RTC_config.rtcHours%10);
-	 uint8_t HD = (ptrHandlerRtc->RTC_config.rtcHours-ptrHandlerRtc->RTC_config.rtcHours%10)/10;
+	 HU = (ptrHandlerRtc->RTC_config.rtcHours%10);
+	 HD = (ptrHandlerRtc->RTC_config.rtcHours-ptrHandlerRtc->RTC_config.rtcHours%10)/10;
 	 // convertimos el formato de Minutos en BDC
-	 uint8_t MU = (ptrHandlerRtc->RTC_config.rtcMinutes%10);
-	 uint8_t MD = (ptrHandlerRtc->RTC_config.rtcMinutes-ptrHandlerRtc->RTC_config.rtcMinutes%10)/10;
+	 MU = (ptrHandlerRtc->RTC_config.rtcMinutes%10);
+	 MD = (ptrHandlerRtc->RTC_config.rtcMinutes-ptrHandlerRtc->RTC_config.rtcMinutes%10)/10;
 	 // convertimos el formato de segundos en BDC
-	 uint8_t SU = (ptrHandlerRtc->RTC_config.rtcSeconds%10);
-	 uint8_t SD = (ptrHandlerRtc->RTC_config.rtcSeconds-ptrHandlerRtc->RTC_config.rtcSeconds%10)/10;
+	 SU = (ptrHandlerRtc->RTC_config.rtcSeconds%10);
+	 SD = (ptrHandlerRtc->RTC_config.rtcSeconds-ptrHandlerRtc->RTC_config.rtcSeconds%10)/10;
 	 // convertimos el formato de meses en BDC
-	 uint8_t MoU = (ptrHandlerRtc->RTC_config.rtcMonth%10);
-	 uint8_t MoD = (ptrHandlerRtc->RTC_config.rtcMonth-ptrHandlerRtc->RTC_config.rtcMonth%10)/10;
+	 MoU = (ptrHandlerRtc->RTC_config.rtcMonth%10);
+	 MoD = (ptrHandlerRtc->RTC_config.rtcMonth-ptrHandlerRtc->RTC_config.rtcMonth%10)/10;
 	 // convertimos el formato de dias en BDC
-	 uint8_t DU = (ptrHandlerRtc->RTC_config.rtcDay%10);
-	 uint8_t DD = (ptrHandlerRtc->RTC_config.rtcDay-ptrHandlerRtc->RTC_config.rtcDay%10)/10;
+	 DU = (ptrHandlerRtc->RTC_config.rtcDay%10);
+	 DD = (ptrHandlerRtc->RTC_config.rtcDay-ptrHandlerRtc->RTC_config.rtcDay%10)/10;
+	 //Convertimos el formato de años en BBC
+	 YU = (ptrHandlerRtc->RTC_config.rtcYear%10);
+	 YD = (ptrHandlerRtc->RTC_config.rtcYear-ptrHandlerRtc->RTC_config.rtcYear%10)/10;
+}
+
+uint8_t actualTime[7] = {0};
+
+
+uint8_t *getDate(void){
+
+	unsigned char actualTime[7];
+
+
+	Time = RTC->TR;
+	Date = RTC->DR;
+
+	Hour	= (Time & 0x3F0000) >> RTC_TR_HU_Pos;
+	Minutes = (Time & 0x007F00) >> RTC_TR_MNU_Pos;
+	Seconds = Time  & 0x7F;
+	Weekday = (Date & 0xE000)   >> RTC_DR_WDU_Pos;
+	Year    = (Date & 0xFF0000) >> RTC_DR_YU_Pos;
+	Month   = (Date & 0x1F00)   >> RTC_DR_MU_Pos;
+	Day     =  Date  & 0x3F;
+
+	actualTime[0] = Seconds;
+	actualTime[1] = Minutes;
+	actualTime[2] = Hour;
+	actualTime[3] = Weekday;
+	actualTime[4] = Day;
+	actualTime[5] = Month;
+	actualTime[6] = Year;
+
+	return actualTime;
 }
