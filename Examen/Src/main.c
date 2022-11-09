@@ -644,3 +644,15 @@ void parseCommands(char *stringVector){
 
 }
 
+//Revisión Parcial
+//- La terminal funciona, pero no fue posible probar algunos comandos
+//- El Joystick funciona
+//- El RGB funciona y responde muy bien al movimiento del joystick
+//- No presenta el RTC
+//- Presenta la OLED, pero por algun motivo no muestra caracteres.
+//-
+//
+//
+//(8+20+0+10+10+20)*5/100
+//
+//Calificación = 3.4
