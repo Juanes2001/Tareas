@@ -15,7 +15,6 @@
 // HSI del MCU, para asi darle una señal de reloj de alta velocidad a AHB, APB2 de 100 MHz y a APB1 de 50MHz.
 
 void RCC_enableMaxFrequencies(void);
-void RCC_resetMode(void);
 
 
 #endif /* RCCHUNMHZ_H_ */

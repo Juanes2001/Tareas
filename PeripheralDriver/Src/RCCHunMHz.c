@@ -11,9 +11,17 @@
 
 void RCC_enableMaxFrequencies(void){
 
+	//Antes de configurar el PLL del RCC, debemos cambiar la velocidad de lectura de la memoria flash
+	FLASH->ACR &= ~(0xF << FLASH_ACR_LATENCY_Pos);
+	FLASH->ACR |= (0b0011 << FLASH_ACR_LATENCY_Pos);
+
 	//Nos aseguramos que el PLL esta apagado para asi hacer la configuracion del mismo, ademas selecc
 	RCC->CR &= ~(RCC_CR_PLLON);
-	RCC->CFGR |= RCC_CFGR_SW_HSI;
+	RCC->CFGR |= RCC_CFGR_SW_PLL;
+
+	while(!(RCC->CFGR & RCC_CFGR_SWS_PLL)){
+		__NOP();
+	}
 
 	//Antes de configurar el PLL referenciamos cual sera la fuente para el PLL, en nuestro caso sera el HSI sobre el mismo registro
 	RCC->PLLCFGR &= 0x00;
