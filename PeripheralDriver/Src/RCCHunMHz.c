@@ -17,6 +17,11 @@ void RCC_enableMaxFrequencies(void){
 
 	//Nos aseguramos que el PLL esta apagado para asi hacer la configuracion del mismo, ademas selecc
 	RCC->CR &= ~(RCC_CR_PLLON);
+	//Configuramos la salida MCO1 para verificar el estado real del MCU y su velocidad
+	RCC->CFGR |= RCC_CFGR_MCO1;
+	//Le damos una division a la señal que pasa por MCO1 de 5 para poder leerla en el osciloscopio
+	RCC->CFGR |= RCC_CFGR_MCO1PRE;
+
 	RCC->CFGR |= RCC_CFGR_SW_PLL;
 
 	while(!(RCC->CFGR & RCC_CFGR_SWS_PLL)){
@@ -32,8 +37,8 @@ void RCC_enableMaxFrequencies(void){
 	RCC->PLLCFGR |= (2 << RCC_PLLCFGR_PLLP_Pos);
 
 	//Seleccionamos los preescalers adecuados para los AHB y APBx en el registro RCC_CFGR
-	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
 	RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
 	RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
 
 	//Configurado el PLL para salida de 100MHz entonces ya podemos activar el PLL
