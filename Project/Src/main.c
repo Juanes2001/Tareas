@@ -58,7 +58,9 @@ int main (void){
 		if (auxData != '\0'){
 			if (auxData == '1'){
 				GPIOxTooglePin(&handlerPINF1);
+				writeChar(&handlerUSART2, auxData);
 				auxData = '\0';
+
 			}else if (auxData == '2'){
 				GPIOxTooglePin(&handlerPINF2);
 				auxData = '\0';
