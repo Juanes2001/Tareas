@@ -12,7 +12,9 @@ C_SRCS += \
 ../Src/I2CDriver.c \
 ../Src/OLEDDriver.c \
 ../Src/PwmDriver.c \
+../Src/RCCHunMHz.c \
 ../Src/RTCDriver.c \
+../Src/SPIDriver.c \
 ../Src/USARTxDriver.c \
 ../Src/syscalls.c \
 ../Src/sysmem.c 
@@ -25,7 +27,9 @@ OBJS += \
 ./Src/I2CDriver.o \
 ./Src/OLEDDriver.o \
 ./Src/PwmDriver.o \
+./Src/RCCHunMHz.o \
 ./Src/RTCDriver.o \
+./Src/SPIDriver.o \
 ./Src/USARTxDriver.o \
 ./Src/syscalls.o \
 ./Src/sysmem.o 
@@ -38,7 +42,9 @@ C_DEPS += \
 ./Src/I2CDriver.d \
 ./Src/OLEDDriver.d \
 ./Src/PwmDriver.d \
+./Src/RCCHunMHz.d \
 ./Src/RTCDriver.d \
+./Src/SPIDriver.d \
 ./Src/USARTxDriver.d \
 ./Src/syscalls.d \
 ./Src/sysmem.d 

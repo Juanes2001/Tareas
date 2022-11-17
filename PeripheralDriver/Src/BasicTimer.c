@@ -54,11 +54,14 @@ void BasicTimer_Config(BasicTimer_Handler_t *ptrBTimerHandler){
 		__NOP();
 	}
 
+	//Dejamos una relacion 1 a 1 para la velocidad de conteo del timer
+	ptrBTimerHandler->ptrTIMx->CR1 &= ~(TIM_CR1_CKD);
 	/* 2. Configuramos el Pre-scaler
 	 * Recordar que el prescaler nos indica la velocidad a la que se incrementa el counter, de forma que
 	 * periodo_incremento * veces_incremento_counter = periodo_update
 	 * Modificar el valor del registro PSC en el TIM utilizado
 	 */
+
 	ptrBTimerHandler->ptrTIMx->PSC = ptrBTimerHandler->TIMx_Config.TIMx_speed;
 
 	/* 3. Configuramos la dirección del counter (up/down)*/
