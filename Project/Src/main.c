@@ -43,6 +43,8 @@ USART_Handler_t handlerUSART2    = {0};
 
 
 uint8_t auxData  = '\0';
+char bufferData[64];
+
 
 
 
@@ -58,23 +60,34 @@ int main (void){
 		if (auxData != '\0'){
 			if (auxData == '1'){
 				GPIOxTooglePin(&handlerPINF1);
-				writeChar(&handlerUSART2, auxData);
+				sprintf(bufferData,"1 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF1));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 
 			}else if (auxData == '2'){
 				GPIOxTooglePin(&handlerPINF2);
+				sprintf(bufferData,"2 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF2));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 			}else if (auxData == '3'){
 				GPIOxTooglePin(&handlerPINF3);
+				sprintf(bufferData,"3 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF3));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 			}else if (auxData == '4'){
 				GPIOxTooglePin(&handlerPINF4);
+				sprintf(bufferData,"4 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF4));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 			}else if (auxData == '5'){
 				GPIOxTooglePin(&handlerPINF5);
+				sprintf(bufferData,"5 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF5));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 			}else if (auxData == '6'){
 				GPIOxTooglePin(&handlerPINF6);
+				sprintf(bufferData,"6 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF6));
+				writeMsg(&handlerUSART2, bufferData);
 				auxData = '\0';
 			}
 		}
@@ -105,7 +118,7 @@ void initSystem(void){
 	GPIO_Config(&handlerPINF2);
 	GPIO_WritePin(&handlerPINF2, RESET);
 
-	handlerPINF3.pGPIOx = GPIOA;
+	handlerPINF3.pGPIOx = GPIOB;
 	handlerPINF3.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
 	handlerPINF3.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	handlerPINF3.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
@@ -115,7 +128,7 @@ void initSystem(void){
 	GPIO_Config(&handlerPINF3);
 	GPIO_WritePin(&handlerPINF3, RESET);
 
-	handlerPINF4.pGPIOx = GPIOA;
+	handlerPINF4.pGPIOx = GPIOB;
 	handlerPINF4.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
 	handlerPINF4.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
 	handlerPINF4.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
