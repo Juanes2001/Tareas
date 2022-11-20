@@ -25,12 +25,12 @@
 
 
 //Pines controladores para el motor
-GPIO_Handler_t handlerPINF1 = {0};
-GPIO_Handler_t handlerPINF2 = {0};
-GPIO_Handler_t handlerPINF3 = {0};
-GPIO_Handler_t handlerPINF4 = {0};
-GPIO_Handler_t handlerPINF5 = {0};
-GPIO_Handler_t handlerPINF6 = {0};
+GPIO_Handler_t handlerPINT1 = {0};
+GPIO_Handler_t handlerPINT2 = {0};
+GPIO_Handler_t handlerPINT3 = {0};
+GPIO_Handler_t handlerPINT4 = {0};
+GPIO_Handler_t handlerPINT5 = {0};
+GPIO_Handler_t handlerPINT6 = {0};
 
 
 GPIO_Handler_t handlerUSARTPinTx       = {0};
@@ -44,12 +44,16 @@ USART_Handler_t handlerUSART2    = {0};
 
 uint8_t auxData  = '\0';
 char bufferData[64];
+uint8_t flag = RESET;
+uint8_t counterMotor = 0;
 
 
 
 
 
 void initSystem(void);
+void startMotor(void);
+void updateRPMMotor(uint8_t period);
 
 int main (void){
 
@@ -57,106 +61,180 @@ int main (void){
 
 	while(1){
 
-		if (auxData != '\0'){
-			if (auxData == '1'){
-				GPIOxTooglePin(&handlerPINF1);
-				sprintf(bufferData,"1 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF1));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
+		// Aqui se almacenara la secuencia de giro la cual se ejecutara repetidas veces para hacer girar el motor
+		if (flag){
+			switch (counterMotor) {
+				case 1:
 
-			}else if (auxData == '2'){
-				GPIOxTooglePin(&handlerPINF2);
-				sprintf(bufferData,"2 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF2));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
-			}else if (auxData == '3'){
-				GPIOxTooglePin(&handlerPINF3);
-				sprintf(bufferData,"3 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF3));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
-			}else if (auxData == '4'){
-				GPIOxTooglePin(&handlerPINF4);
-				sprintf(bufferData,"4 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF4));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
-			}else if (auxData == '5'){
-				GPIOxTooglePin(&handlerPINF5);
-				sprintf(bufferData,"5 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF5));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
-			}else if (auxData == '6'){
-				GPIOxTooglePin(&handlerPINF6);
-				sprintf(bufferData,"6 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF6));
-				writeMsg(&handlerUSART2, bufferData);
-				auxData = '\0';
+					GPIO_WritePin(&handlerPINT1, SET);
+					GPIO_WritePin(&handlerPINT2, RESET);
+					GPIO_WritePin(&handlerPINT3, RESET);
+					GPIO_WritePin(&handlerPINT4, RESET);
+					GPIO_WritePin(&handlerPINT5, RESET);
+					GPIO_WritePin(&handlerPINT6, SET);
+
+
+					break;
+				case 2:
+
+					GPIO_WritePin(&handlerPINT1, RESET);
+					GPIO_WritePin(&handlerPINT2, SET);
+					GPIO_WritePin(&handlerPINT3, RESET);
+					GPIO_WritePin(&handlerPINT4, RESET);
+					GPIO_WritePin(&handlerPINT5, RESET);
+					GPIO_WritePin(&handlerPINT6, SET);
+
+					break;
+				case 3:
+
+					GPIO_WritePin(&handlerPINT1, RESET);
+					GPIO_WritePin(&handlerPINT2, SET);
+					GPIO_WritePin(&handlerPINT3, RESET);
+					GPIO_WritePin(&handlerPINT4, SET);
+					GPIO_WritePin(&handlerPINT5, RESET);
+					GPIO_WritePin(&handlerPINT6, RESET);
+					break;
+				case 4:
+
+					GPIO_WritePin(&handlerPINT1, RESET);
+					GPIO_WritePin(&handlerPINT2, RESET);
+					GPIO_WritePin(&handlerPINT3, SET);
+					GPIO_WritePin(&handlerPINT4, SET);
+					GPIO_WritePin(&handlerPINT5, RESET);
+					GPIO_WritePin(&handlerPINT6, RESET);
+
+					break;
+				case 5:
+
+					GPIO_WritePin(&handlerPINT1, RESET);
+					GPIO_WritePin(&handlerPINT2, RESET);
+					GPIO_WritePin(&handlerPINT3, SET);
+					GPIO_WritePin(&handlerPINT4, RESET);
+					GPIO_WritePin(&handlerPINT5, SET);
+					GPIO_WritePin(&handlerPINT6, RESET);
+					break;
+				case 6:
+
+					GPIO_WritePin(&handlerPINT1, SET);
+					GPIO_WritePin(&handlerPINT2, RESET);
+					GPIO_WritePin(&handlerPINT3, RESET);
+					GPIO_WritePin(&handlerPINT4, RESET);
+					GPIO_WritePin(&handlerPINT5, SET);
+					GPIO_WritePin(&handlerPINT6, RESET);
+
+					break;
+				default:
+					__NOP();
+					break;
+			}//Fin del switch case
+			flag = RESET;
+			if (counterMotor >= 6){
+				counterMotor = SET;
 			}
 		}
+
+
+
+//		if (auxData != '\0'){
+//			if (auxData == '1'){
+//				GPIOxTooglePin(&handlerPINT1);
+//				sprintf(bufferData,"1 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF1));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//
+//			}else if (auxData == '2'){
+//				GPIOxTooglePin(&handlerPINF2);
+//				sprintf(bufferData,"2 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF2));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//			}else if (auxData == '3'){
+//				GPIOxTooglePin(&handlerPINF3);
+//				sprintf(bufferData,"3 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF3));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//			}else if (auxData == '4'){
+//				GPIOxTooglePin(&handlerPINF4);
+//				sprintf(bufferData,"4 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF4));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//			}else if (auxData == '5'){
+//				GPIOxTooglePin(&handlerPINF5);
+//				sprintf(bufferData,"5 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF5));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//			}else if (auxData == '6'){
+//				GPIOxTooglePin(&handlerPINF6);
+//				sprintf(bufferData,"6 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF6));
+//				writeMsg(&handlerUSART2, bufferData);
+//				auxData = '\0';
+//			}
+//		}
 
 	}
 
 }
 
 void initSystem(void){
+	//Pines digitales para
+	handlerPINT1.pGPIOx = GPIOC;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT1);
+	GPIO_WritePin(&handlerPINT1, RESET);
 
-	handlerPINF1.pGPIOx = GPIOA;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF1);
-	GPIO_WritePin(&handlerPINF1, RESET);
+	handlerPINT2.pGPIOx = GPIOC;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinNumber = PIN_1;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT2.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT2);
+	GPIO_WritePin(&handlerPINT2, RESET);
 
-	handlerPINF2.pGPIOx = GPIOA;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinNumber = PIN_1;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF2.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF2);
-	GPIO_WritePin(&handlerPINF2, RESET);
+	handlerPINT3.pGPIOx = GPIOC;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinNumber = PIN_2;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT3.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT3);
+	GPIO_WritePin(&handlerPINT3, RESET);
 
-	handlerPINF3.pGPIOx = GPIOB;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinNumber = PIN_2;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF3.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF3);
-	GPIO_WritePin(&handlerPINF3, RESET);
+	handlerPINT4.pGPIOx = GPIOC;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinNumber = PIN_3;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT4.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT4);
+	GPIO_WritePin(&handlerPINT4, RESET);
 
-	handlerPINF4.pGPIOx = GPIOB;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinNumber = PIN_3;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF4.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF4);
-	GPIO_WritePin(&handlerPINF4, RESET);
+	handlerPINT5.pGPIOx = GPIOC;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT5.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT5);
+	GPIO_WritePin(&handlerPINT5, RESET);
 
-	handlerPINF5.pGPIOx = GPIOA;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF5.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF5);
-	GPIO_WritePin(&handlerPINF5, RESET);
-
-	handlerPINF6.pGPIOx = GPIOA;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINF6.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINF6);
-	GPIO_WritePin(&handlerPINF6, RESET);
+	handlerPINT6.pGPIOx = GPIOC;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINT6.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINT6);
+	GPIO_WritePin(&handlerPINT6, RESET);
 
 
 	handlerTIMMotor.ptrTIMx = TIM2;
@@ -197,11 +275,22 @@ void initSystem(void){
 
 }
 
-//void BasicTimer2_Callback(void){
-//
-//}
+void BasicTimer2_Callback(void){
+	flag = SET;
+	counterMotor++;
+}
 
 void usart2Rx_Callback(void){
 	auxData = getRxData();
+}
+
+void startMotor(void){
+	startTimer(&handlerTIMMotor);
+}
+
+void updateRPMMotor(uint8_t period){
+	stopTimer(&handlerTIMMotor);
+	TIM2->ARR = period - 1;
+	startTimer(&handlerTIMMotor);
 }
 

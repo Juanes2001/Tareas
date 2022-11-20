@@ -5,8 +5,9 @@
  *      Author: JUAN ESTEBAN
  */
 
+#include "stm32f4xx.h"
 
-#include "RCCHunMHz.h"
+void RCC_enableMaxFrequencies(void);
 
 
 void RCC_enableMaxFrequencies(void){
