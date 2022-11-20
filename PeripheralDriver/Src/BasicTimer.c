@@ -7,7 +7,6 @@
 
 #include "BasicTimer.h"
 
-
 /* Función en la que cargamos la configuración del Timer
  * Recordar que siempre se debe comenzar con activar la señal de reloj
  * del periférico que se está utilizando.
@@ -159,6 +158,10 @@ __attribute__((weak)) void BasicTimer5_Callback(void){
 void TIM2_IRQHandler(void){
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM2->SR &= ~TIM_SR_UIF;
+	TIM2->SR &= ~TIM_SR_CC1IF;
+	TIM2->SR &= ~TIM_SR_CC2IF;
+	TIM2->SR &= ~TIM_SR_CC3IF;
+	TIM2->SR &= ~TIM_SR_CC4IF;
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 	BasicTimer2_Callback();
@@ -167,6 +170,10 @@ void TIM2_IRQHandler(void){
 void TIM3_IRQHandler(void){
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM3->SR &= ~TIM_SR_UIF;
+	TIM3->SR &= ~TIM_SR_CC1IF;
+	TIM3->SR &= ~TIM_SR_CC2IF;
+	TIM3->SR &= ~TIM_SR_CC3IF;
+	TIM3->SR &= ~TIM_SR_CC4IF;
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 	BasicTimer3_Callback();
@@ -175,6 +182,10 @@ void TIM3_IRQHandler(void){
 void TIM4_IRQHandler(void){
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM4->SR &= ~TIM_SR_UIF;
+	TIM4->SR &= ~TIM_SR_CC1IF;
+	TIM4->SR &= ~TIM_SR_CC2IF;
+	TIM4->SR &= ~TIM_SR_CC3IF;
+	TIM4->SR &= ~TIM_SR_CC4IF;
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 	BasicTimer4_Callback();
@@ -183,6 +194,10 @@ void TIM4_IRQHandler(void){
 void TIM5_IRQHandler(void){
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
 	TIM5->SR &= ~TIM_SR_UIF;
+	TIM5->SR &= ~TIM_SR_CC1IF;
+	TIM5->SR &= ~TIM_SR_CC2IF;
+	TIM5->SR &= ~TIM_SR_CC3IF;
+	TIM5->SR &= ~TIM_SR_CC4IF;
 
 	/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 	BasicTimer5_Callback();

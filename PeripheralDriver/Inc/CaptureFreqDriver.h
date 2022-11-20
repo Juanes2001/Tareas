@@ -47,7 +47,8 @@ typedef struct
 
 /*Prototipos de las funciones*/
 void capture_Config (Capture_Handler_t *ptrCaptureHandler);
-uint32_t getPeriodFrec(Capture_Handler_t *ptrCaptureHandler);
+void startCapture (Capture_Handler_t *ptrCaptureHandler);
+void stopCapture (Capture_Handler_t *ptrCaptureHandler);
 
 
 

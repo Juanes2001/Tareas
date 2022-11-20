@@ -16,6 +16,7 @@
 #include "OLEDDriver.h"
 #include "RTCDriver.h"
 #include "RCCHunMHz.h"
+#include "CaptureFreqDriver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -24,97 +25,102 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Variables que se usaron para la demostracion, counter: variable contadora que se imprimira
-// en la comunicacion serial, auxData, para recibir los caracteres de la comunicacion
-// serial tipo comandos [start (s), stop(p)], bufferData, arreglo string que guardara
-// el mensaje que se enviara por comunicacion serial, flag, para recibir las interrupciones del timper 2
-// en el main.
-
-uint32_t counter    = 0;
-uint8_t auxData     = '\0';
-char bufferData[64] = {0};
-uint8_t flag        = 0;
-
 //handlers GPIO para el led blinky, el pin Tx y Rx, y el pin de salida de señal de reloj
 
-GPIO_Handler_t handlerPINLED           = {0};
-GPIO_Handler_t handlerUSARTPinTx       = {0};
-GPIO_Handler_t handlerUSARTPinRx       = {0};
-GPIO_Handler_t handlerPINHighFreq      = {0};
+GPIO_Handler_t handlerPINLED       = {0};
+GPIO_Handler_t handlerUSARTPinTx   = {0};
+GPIO_Handler_t handlerUSARTPinRx   = {0};
+GPIO_Handler_t handlerPINCapture   = {0};
+GPIO_Handler_t handlerPINPwm       = {0};
 
 //handler del timer para interrupciones
-BasicTimer_Handler_t handlerTIMHighVel = {0};
-//handler Usart 2
-USART_Handler_t handlerUSARTHighVel    = {0};
+BasicTimer_Handler_t handlerTIMLED = {0};
 
+//handler PWM para lectura de frecuencia
+PWM_Handler_t handlerPWMFreq = {0};
+
+//handler Usart 2
+USART_Handler_t handlerUSART2Capture    = {0};
+
+//Capture handler
+Capture_Handler_t handlerCaptureFreq = {0};
+
+uint32_t timestamp1 = 0;
+uint32_t timestamp2 = 0;
+uint32_t deltaTimestamp = 0;
+uint8_t counterCapture = 0;
+uint8_t auxData = '\0';
+uint8_t flag = RESET;
+char bufferData[64];
 
 void initSystem(void);
+
 //Aqui se ejecuta todo el programa , el corazon del mismo
 int main(void){
 
-	//Se ejecuta ya la nueva opcion de aumentar la velocidad del MCU a su maximo potencial
-	// ademas de la iniciacion de las configuraciones de los handlers
-	RCC_enableMaxFrequencies();
 	initSystem();
 
 	while(1){
 
 		if (auxData != '\0'){
 			if (auxData == 's'){
-				startTimer(&handlerTIMHighVel);
-				writeMsg(&handlerUSARTHighVel, "Timer ON \n \r");
+				startPwmSignal(&handlerPWMFreq);
+				startCapture(&handlerCaptureFreq);
+				writeMsg(&handlerUSART2Capture, "Timer5 ON \n \r");
 				auxData = '\0';
 			}else if (auxData == 'p'){
-				stopTimer(&handlerTIMHighVel);
-				writeMsg(&handlerUSARTHighVel, "Timer OFF \n \r");
+				stopCapture(&handlerCaptureFreq);
+				writeMsg(&handlerUSART2Capture, "Timer5 OFF \n \r");
 				auxData = '\0';
 			}
 		}
-
-		if (flag){
-			sprintf(bufferData, "counter = %u \n\r",(unsigned int) counter);
-			writeMsg(&handlerUSARTHighVel, bufferData);
-			flag = RESET;
+		if (auxData == 'l')
+			if (flag){
+				sprintf(bufferData, "period = %ums\n\r",(unsigned int) timestamp2 - (unsigned int) timestamp1);
+				writeMsg(&handlerUSART2Capture, bufferData);
+				flag = RESET;
+				timestamp1 = 0;
+				timestamp2 = 0;
 		}
-
 	}
-
 }
+
 
 void initSystem(void){
 
-	//PIN de salida de señal de reloj A8, conectar a osciloscopio si se desa para ver la salida
-	// de señal con un preescalamiento de 4 (25MHz aprox)
+	handlerPINCapture.pGPIOx = GPIOA;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINCapture);
 
-	handlerPINHighFreq.pGPIOx = GPIOA;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinNumber = PIN_8;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINHighFreq.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINHighFreq);
-
-
-
+	handlerCaptureFreq.ptrTIMx                 = TIM5;
+	handlerCaptureFreq.config.channel          = CAPTURE_CHANNEL_1;
+	handlerCaptureFreq.config.edgeSignal       = CAPTURE_RISING_EDGE;
+	handlerCaptureFreq.config.prescalerCapture = CAPTURE_PREESCALER_1_1;
+	handlerCaptureFreq.config.timerSpeed       = CAPTURE_TIMER_SPEED_1us;
+	capture_Config(&handlerCaptureFreq);
 
 	//PIN LED para el blinky junto con su timer configurado con sus nuevas macros que corresponden
 	//a la nueva velocidad de preescalamiento
-	handlerPINLED.pGPIOx = GPIOA;
-	handlerPINLED.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINLED.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINLED.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINLED.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
+	handlerPINLED.pGPIOx                             = GPIOA;
+	handlerPINLED.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
+	handlerPINLED.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_OUT;
+	handlerPINLED.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerPINLED.GPIO_PinConfig.GPIO_PinNumber      = PIN_5;
 	handlerPINLED.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINLED.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	handlerPINLED.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPINLED);
 
-	handlerTIMHighVel.ptrTIMx = TIM2;
-	handlerTIMHighVel.TIMx_Config.TIMx_interruptEnable = 1;
-	handlerTIMHighVel.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerTIMHighVel.TIMx_Config.TIMx_period = 2500;
-	handlerTIMHighVel.TIMx_Config.TIMx_speed = BTIMER_SPEED_100MHz_100us;
-	BasicTimer_Config(&handlerTIMHighVel);
+	handlerTIMLED.ptrTIMx = TIM2;
+	handlerTIMLED.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerTIMLED.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
+	handlerTIMLED.TIMx_Config.TIMx_period          = 2500;
+	handlerTIMLED.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerTIMLED);
 
 	//USART 2 para comunicacion serial con el nuevo macro (baudrate) correspondiente
 	// a la nueva velocidad de procesamiento, tambien se incluyen los pines Tx y Rx correspondientes
@@ -137,27 +143,51 @@ void initSystem(void){
 	handlerUSARTPinRx.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerUSARTPinRx);
 
+	handlerUSART2Capture.ptrUSARTx                      = USART2;
+	handlerUSART2Capture.USART_Config.USART_baudrate    = USART_BAUDRATE_CUSTOM_USART2;
+	handlerUSART2Capture.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
+	handlerUSART2Capture.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
+	handlerUSART2Capture.USART_Config.USART_mode        = USART_MODE_RXTX;
+	handlerUSART2Capture.USART_Config.USART_parity      = USART_PARITY_NONE;
+	handlerUSART2Capture.USART_Config.USART_stopbits    = USART_STOPBIT_1;
+	handlerUSART2Capture.USART_Config.USART_datasize    = USART_DATASIZE_8BIT;
+	handlerUSART2Capture.USART_Config.USART_parityError = 0;
+	USART_Config(&handlerUSART2Capture);
 
-	handlerUSARTHighVel.ptrUSARTx                      = USART2;
-	handlerUSARTHighVel.USART_Config.USART_baudrate    = USART_BAUDRATE_CUSTOM_USART2;
-	handlerUSARTHighVel.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
-	handlerUSARTHighVel.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
-	handlerUSARTHighVel.USART_Config.USART_mode        = USART_MODE_RXTX;
-	handlerUSARTHighVel.USART_Config.USART_parity      = USART_PARITY_NONE;
-	handlerUSARTHighVel.USART_Config.USART_stopbits    = USART_STOPBIT_1;
-	handlerUSARTHighVel.USART_Config.USART_datasize    = USART_DATASIZE_8BIT;
-	handlerUSARTHighVel.USART_Config.USART_parityError = 0;
-	USART_Config(&handlerUSARTHighVel);
+	handlerPINPwm.pGPIOx = GPIOB;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPINPwm);
+
+	handlerPWMFreq.ptrTIMx                = TIM3;
+	handlerPWMFreq.config.channel         = PWM_CHANNEL_1;
+	handlerPWMFreq.config.duttyCicle      = 50;
+	handlerPWMFreq.config.periodo         = 1000;
+	handlerPWMFreq.config.prescaler       = PWM_SPEED_100us;
+	pwm_Config(&handlerPWMFreq);
+
 
 }
-//Interrupcion del timer, incluye el cambio de estado para el LED, el aumento de conteo del counter
-// y el seteo del flag
+
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerPINLED);
-	counter++;
-	flag = SET;
 }
-//interrupciones del USART2 por recepcion, almacenamos en auxData el comando enviado por Coolterm
+
+void BasicTimer5_Callback(void){
+	flag = SET;
+	if (counterCapture == 0){
+		timestamp1 = TIM5->CCR1;
+		counterCapture++;
+	}else if (counterCapture == 2){
+		timestamp2 = TIM5->CCR1;
+	}
+}
+
+//Interrupciones del USART2 por recepcion, almacenamos en auxData el comando enviado por Coolterm
 void usart2Rx_Callback(void){
 	auxData = getRxData();
 }

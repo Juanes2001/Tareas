@@ -7,16 +7,25 @@
 
 #include "CaptureFreqDriver.h"
 
+
 void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 		//Actuvamos el timer al que se le usaraan sus canales
 	if (ptrCaptureHandler->ptrTIMx == TIM2){
+
 		RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+
 	}else if (ptrCaptureHandler->ptrTIMx == TIM3){
+
 		RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
+
 	}else if (ptrCaptureHandler->ptrTIMx == TIM4){
+
 		RCC->APB1ENR |= RCC_APB1ENR_TIM4EN;
+
 	}else if (ptrCaptureHandler->ptrTIMx == TIM5){
+
 		RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
+
 	}else {
 		__NOP();
 	}
@@ -37,7 +46,7 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 	 * el valor carhgado en el CCRx sera recargado en el registro Shadow del PWM
 	 */
 
-
+	//Ademas activamos las interrupciones por conteo de tiempo en flanco
 	switch (ptrCaptureHandler->config.channel) {
 		case CAPTURE_CHANNEL_1:
 			//borramos el posible valor cargado
@@ -66,6 +75,9 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 
 			//Activamos el modo captura
 			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC1E;
+
+			//Ademas activamos las interrupciones por conteo de tiempo en flanco
+			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC1IE;
 
 			break;
 		case CAPTURE_CHANNEL_2:
@@ -96,6 +108,8 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 			//Activamos el modo captura
 			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC2E;
 
+			//Ademas activamos las interrupciones por conteo de tiempo en flanco
+			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC2IE;
 			break;
 		case CAPTURE_CHANNEL_3:
 			//borramos el posible valor cargado
@@ -124,6 +138,9 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 
 			//Activamos el modo captura
 			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC3E;
+
+			//Ademas activamos las interrupciones por conteo de tiempo en flanco
+			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC3IE;
 
 			break;
 		case CAPTURE_CHANNEL_4:
@@ -154,6 +171,9 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 			//Activamos el modo captura
 			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC4E;
 
+			//Ademas activamos las interrupciones por conteo de tiempo en flanco
+			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC4IE;
+
 			break;
 		default:
 			__NOP();
@@ -163,7 +183,21 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 	//Configuramos el preescaler del timer, el cual define a que velocidad se incrementa nuestro timer
 	ptrCaptureHandler->ptrTIMx->PSC = ptrCaptureHandler->config.timerSpeed;
 
-
 }
+
+void startCapture (Capture_Handler_t *ptrCaptureHandler){
+	// Comenzamos el conteo del timer con el counter en 0
+	ptrCaptureHandler->ptrTIMx->CNT = 0;
+	ptrCaptureHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
+}
+
+void stopCapture (Capture_Handler_t *ptrCaptureHandler){
+	// Comenzamos el conteo del timer
+	ptrCaptureHandler->ptrTIMx->CNT = 0;
+	ptrCaptureHandler->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
+}
+
+
+
 
 
