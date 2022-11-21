@@ -7,7 +7,6 @@
 
 #include "stm32f4xx.h"
 
-void RCC_enableMaxFrequencies(void);
 
 
 void RCC_enableMaxFrequencies(void){

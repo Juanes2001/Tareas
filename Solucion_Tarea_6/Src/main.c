@@ -62,25 +62,34 @@ int main(void){
 
 	while(1){
 
+		if (flag){
+			writeMsg(&handlerUSART2Capture, "si");
+			flag = RESET;
+		}
+
 		if (auxData != '\0'){
 			if (auxData == 's'){
 				startPwmSignal(&handlerPWMFreq);
 				startCapture(&handlerCaptureFreq);
+				writeChar(&handlerUSART2Capture, auxData);
 				writeMsg(&handlerUSART2Capture, "Timer5 ON \n \r");
 				auxData = '\0';
 			}else if (auxData == 'p'){
 				stopCapture(&handlerCaptureFreq);
+				writeChar(&handlerUSART2Capture, auxData);
 				writeMsg(&handlerUSART2Capture, "Timer5 OFF \n \r");
 				auxData = '\0';
 			}
 		}
-		if (auxData == 'l')
+		if (auxData == 'l'){
 			if (flag){
 				sprintf(bufferData, "period = %ums\n\r",(unsigned int) timestamp2 - (unsigned int) timestamp1);
 				writeMsg(&handlerUSART2Capture, bufferData);
 				flag = RESET;
+				counterCapture = 0;
 				timestamp1 = 0;
 				timestamp2 = 0;
+			}
 		}
 	}
 }
@@ -121,6 +130,7 @@ void initSystem(void){
 	handlerTIMLED.TIMx_Config.TIMx_period          = 2500;
 	handlerTIMLED.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerTIMLED);
+	startTimer(&handlerTIMLED);
 
 	//USART 2 para comunicacion serial con el nuevo macro (baudrate) correspondiente
 	// a la nueva velocidad de procesamiento, tambien se incluyen los pines Tx y Rx correspondientes
@@ -144,7 +154,7 @@ void initSystem(void){
 	GPIO_Config(&handlerUSARTPinRx);
 
 	handlerUSART2Capture.ptrUSARTx                      = USART2;
-	handlerUSART2Capture.USART_Config.USART_baudrate    = USART_BAUDRATE_CUSTOM_USART2;
+	handlerUSART2Capture.USART_Config.USART_baudrate    = USART_BAUDRATE_115200;
 	handlerUSART2Capture.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
 	handlerUSART2Capture.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
 	handlerUSART2Capture.USART_Config.USART_mode        = USART_MODE_RXTX;
@@ -177,14 +187,18 @@ void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerPINLED);
 }
 
-void BasicTimer5_Callback(void){
+void Capture_TIM5_Ch1_Callback(void){
 	flag = SET;
 	if (counterCapture == 0){
 		timestamp1 = TIM5->CCR1;
 		counterCapture++;
-	}else if (counterCapture == 2){
+	}else if (counterCapture == 1){
 		timestamp2 = TIM5->CCR1;
+		counterCapture++;
+	}else{
+		__NOP();
 	}
+
 }
 
 //Interrupciones del USART2 por recepcion, almacenamos en auxData el comando enviado por Coolterm

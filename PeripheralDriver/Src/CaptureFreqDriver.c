@@ -10,6 +10,9 @@
 
 void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 		//Actuvamos el timer al que se le usaraan sus canales
+
+	__disable_irq();
+
 	if (ptrCaptureHandler->ptrTIMx == TIM2){
 
 		RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
@@ -180,8 +183,30 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 			break;
 	}//Fin del switch case
 
+	if(ptrCaptureHandler->ptrTIMx == TIM2){
+		// Activando en NVIC para la interrupción del TIM2
+		NVIC_EnableIRQ(TIM2_IRQn);
+	}
+	else if(ptrCaptureHandler->ptrTIMx == TIM3){
+		// Activando en NVIC para la interrupción del TIM3
+		NVIC_EnableIRQ(TIM3_IRQn);
+	}
+	else if(ptrCaptureHandler->ptrTIMx == TIM4){
+		// Activando en NVIC para la interrupción del TIM4
+		NVIC_EnableIRQ(TIM4_IRQn);
+	}
+	else if(ptrCaptureHandler->ptrTIMx == TIM5){
+		// Activando en NVIC para la interrupción del TIM5
+		NVIC_EnableIRQ(TIM5_IRQn);
+	}
+	else{
+		__NOP();
+	}
+
 	//Configuramos el preescaler del timer, el cual define a que velocidad se incrementa nuestro timer
 	ptrCaptureHandler->ptrTIMx->PSC = ptrCaptureHandler->config.timerSpeed;
+
+	__enable_irq();
 
 }
 
