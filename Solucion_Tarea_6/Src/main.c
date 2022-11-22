@@ -62,33 +62,37 @@ int main(void){
 
 	while(1){
 
-		if (flag){
-			writeMsg(&handlerUSART2Capture, "si");
-			flag = RESET;
-		}
 
 		if (auxData != '\0'){
 			if (auxData == 's'){
 				startPwmSignal(&handlerPWMFreq);
-				startCapture(&handlerCaptureFreq);
-				writeChar(&handlerUSART2Capture, auxData);
 				writeMsg(&handlerUSART2Capture, "Timer5 ON \n \r");
 				auxData = '\0';
 			}else if (auxData == 'p'){
-				stopCapture(&handlerCaptureFreq);
-				writeChar(&handlerUSART2Capture, auxData);
+				stopPwmSignal(&handlerPWMFreq);
 				writeMsg(&handlerUSART2Capture, "Timer5 OFF \n \r");
 				auxData = '\0';
+			} else if (auxData == 'l'){
+				startCapture(&handlerCaptureFreq);
 			}
-		}
-		if (auxData == 'l'){
+
 			if (flag){
-				sprintf(bufferData, "period = %ums\n\r",(unsigned int) timestamp2 - (unsigned int) timestamp1);
-				writeMsg(&handlerUSART2Capture, bufferData);
-				flag = RESET;
-				counterCapture = 0;
-				timestamp1 = 0;
-				timestamp2 = 0;
+				if (counterCapture == 0){
+					timestamp1 = TIM5->CCR2;
+					counterCapture++;
+					flag = RESET;
+				}else if (counterCapture == 1){
+					stopCapture(&handlerCaptureFreq);
+					timestamp2 = TIM5->CCR2;
+					flag = RESET;
+					deltaTimestamp = (timestamp2 - timestamp1);
+					sprintf(bufferData, "period = %ums, t1 = %u , t2 = %u \n\r",(unsigned int) deltaTimestamp,(unsigned int) timestamp1,(unsigned int) timestamp2);
+					writeMsg(&handlerUSART2Capture, bufferData);
+					counterCapture = 0;
+					timestamp1 = 0;
+					timestamp2 = 0;
+					auxData = '\0';
+				}
 			}
 		}
 	}
@@ -97,20 +101,20 @@ int main(void){
 
 void initSystem(void){
 
-	handlerPINCapture.pGPIOx = GPIOA;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
+	handlerPINCapture.pGPIOx                             = GPIOA;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinAltFunMode  = AF2;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPINCapture);
 
 	handlerCaptureFreq.ptrTIMx                 = TIM5;
-	handlerCaptureFreq.config.channel          = CAPTURE_CHANNEL_1;
-	handlerCaptureFreq.config.edgeSignal       = CAPTURE_RISING_EDGE;
+	handlerCaptureFreq.config.channel          = CAPTURE_CHANNEL_2;
+	handlerCaptureFreq.config.edgeSignal       = CAPTURE_FALLING_EDGE;
 	handlerCaptureFreq.config.prescalerCapture = CAPTURE_PREESCALER_1_1;
-	handlerCaptureFreq.config.timerSpeed       = CAPTURE_TIMER_SPEED_1us;
+	handlerCaptureFreq.config.timerSpeed       = CAPTURE_TIMER_SPEED_10us;
 	capture_Config(&handlerCaptureFreq);
 
 	//PIN LED para el blinky junto con su timer configurado con sus nuevas macros que corresponden
@@ -123,6 +127,7 @@ void initSystem(void){
 	handlerPINLED.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPINLED.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPINLED);
+	GPIO_WritePin(&handlerPINLED, SET);
 
 	handlerTIMLED.ptrTIMx = TIM2;
 	handlerTIMLED.TIMx_Config.TIMx_interruptEnable = 1;
@@ -176,7 +181,7 @@ void initSystem(void){
 	handlerPWMFreq.ptrTIMx                = TIM3;
 	handlerPWMFreq.config.channel         = PWM_CHANNEL_1;
 	handlerPWMFreq.config.duttyCicle      = 50;
-	handlerPWMFreq.config.periodo         = 1000;
+	handlerPWMFreq.config.periodo         = 4000;
 	handlerPWMFreq.config.prescaler       = PWM_SPEED_100us;
 	pwm_Config(&handlerPWMFreq);
 
@@ -187,18 +192,8 @@ void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerPINLED);
 }
 
-void Capture_TIM5_Ch1_Callback(void){
+void Capture_TIM5_Ch2_Callback(void){
 	flag = SET;
-	if (counterCapture == 0){
-		timestamp1 = TIM5->CCR1;
-		counterCapture++;
-	}else if (counterCapture == 1){
-		timestamp2 = TIM5->CCR1;
-		counterCapture++;
-	}else{
-		__NOP();
-	}
-
 }
 
 //Interrupciones del USART2 por recepcion, almacenamos en auxData el comando enviado por Coolterm

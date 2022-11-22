@@ -254,20 +254,20 @@ __attribute__((weak)) void Capture_TIM5_Ch4_Callback(void){
  * el sistema inmediatamente salta a este lugar en la memoria*/
 void TIM2_IRQHandler(void){
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	if (!(TIM2->SR & TIM_SR_UIF)){
+	if (TIM2->SR & TIM_SR_UIF){
 		TIM2->SR &= ~TIM_SR_UIF;
 		/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 		BasicTimer2_Callback();
-	}else if (!(TIM2->SR & TIM_SR_CC1IF)){
+	}else if (TIM2->SR & TIM_SR_CC1IF){
 		TIM2->SR &= ~TIM_SR_CC1IF;
 		Capture_TIM2_Ch1_Callback();
-	}else if (!(TIM2->SR & TIM_SR_CC2IF)){
+	}else if (TIM2->SR & TIM_SR_CC2IF){
 		TIM2->SR &= ~TIM_SR_CC2IF;
 		Capture_TIM2_Ch2_Callback();
-	}else if (!(TIM2->SR & TIM_SR_CC3IF)){
+	}else if (TIM2->SR & TIM_SR_CC3IF){
 		TIM2->SR &= ~TIM_SR_CC3IF;
 		Capture_TIM2_Ch3_Callback();
-	}else if (!(TIM2->SR & TIM_SR_CC4IF)){
+	}else if (TIM2->SR & TIM_SR_CC4IF){
 		TIM2->SR &= ~TIM_SR_CC4IF;
 		Capture_TIM2_Ch4_Callback();
 	}
@@ -277,20 +277,20 @@ void TIM2_IRQHandler(void){
 void TIM3_IRQHandler(void){
 
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	if (!(TIM3->SR & TIM_SR_UIF)){
+	if (TIM3->SR & TIM_SR_UIF){
 		TIM3->SR &= ~TIM_SR_UIF;
 		/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 		BasicTimer3_Callback();
-	}else if (!(TIM3->SR & TIM_SR_CC1IF)){
+	}else if (TIM3->SR & TIM_SR_CC1IF){
 		TIM3->SR &= ~TIM_SR_CC1IF;
 		Capture_TIM3_Ch1_Callback();
-	}else if (!(TIM3->SR & TIM_SR_CC2IF)){
+	}else if (TIM3->SR & TIM_SR_CC2IF){
 		TIM3->SR &= ~TIM_SR_CC2IF;
 		Capture_TIM3_Ch2_Callback();
-	}else if (!(TIM3->SR & TIM_SR_CC3IF)){
+	}else if (TIM3->SR & TIM_SR_CC3IF){
 		TIM3->SR &= ~TIM_SR_CC3IF;
 		Capture_TIM3_Ch3_Callback();
-	}else if (!(TIM3->SR & TIM_SR_CC4IF)){
+	}else if (TIM3->SR & TIM_SR_CC4IF){
 		TIM3->SR &= ~TIM_SR_CC4IF;
 		Capture_TIM3_Ch4_Callback();
 	}
@@ -300,20 +300,20 @@ void TIM3_IRQHandler(void){
 void TIM4_IRQHandler(void){
 
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	if (!(TIM4->SR & TIM_SR_UIF)){
+	if (TIM4->SR & TIM_SR_UIF){
 		TIM4->SR &= ~TIM_SR_UIF;
 		/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 		BasicTimer4_Callback();
-	}else if (!(TIM4->SR & TIM_SR_CC1IF)){
+	}else if (TIM4->SR & TIM_SR_CC1IF){
 		TIM4->SR &= ~TIM_SR_CC1IF;
 		Capture_TIM4_Ch1_Callback();
-	}else if (!(TIM4->SR & TIM_SR_CC2IF)){
+	}else if (TIM4->SR & TIM_SR_CC2IF){
 		TIM4->SR &= ~TIM_SR_CC2IF;
 		Capture_TIM4_Ch2_Callback();
-	}else if (!(TIM4->SR & TIM_SR_CC3IF)){
+	}else if (TIM4->SR & TIM_SR_CC3IF){
 		TIM4->SR &= ~TIM_SR_CC3IF;
 		Capture_TIM4_Ch3_Callback();
-	}else if (!(TIM4->SR & TIM_SR_CC4IF)){
+	}else if (TIM4->SR & TIM_SR_CC4IF){
 		TIM4->SR &= ~TIM_SR_CC4IF;
 		Capture_TIM4_Ch4_Callback();
 	}
@@ -323,20 +323,20 @@ void TIM4_IRQHandler(void){
 void TIM5_IRQHandler(void){
 
 	/* Limpiamos la bandera que indica que la interrupción se ha generado */
-	if (!(TIM5->SR & TIM_SR_UIF)){
+	if (TIM5->SR & TIM_SR_UIF){
 		TIM5->SR &= ~TIM_SR_UIF;
 		/* LLamamos a la función que se debe encargar de hacer algo con esta interrupción*/
 		BasicTimer5_Callback();
-	}else if (!(TIM5->SR & TIM_SR_CC1IF)){
+	}else if (TIM5->SR & TIM_SR_CC1IF){
 		TIM5->SR &= ~TIM_SR_CC1IF;
 		Capture_TIM5_Ch1_Callback();
-	}else if (!(TIM5->SR & TIM_SR_CC2IF)){
+	}else if (TIM5->SR & TIM_SR_CC2IF){
 		TIM5->SR &= ~TIM_SR_CC2IF;
 		Capture_TIM5_Ch2_Callback();
-	}else if (!(TIM5->SR & TIM_SR_CC3IF)){
+	}else if (TIM5->SR & TIM_SR_CC3IF){
 		TIM5->SR &= ~TIM_SR_CC3IF;
 		Capture_TIM5_Ch3_Callback();
-	}else if (!(TIM5->SR & TIM_SR_CC4IF)){
+	}else if (TIM5->SR & TIM_SR_CC4IF){
 		TIM5->SR &= ~TIM_SR_CC4IF;
 		Capture_TIM5_Ch4_Callback();
 	}

@@ -44,6 +44,22 @@ void BasicTimer2_Callback(void); /* Esta función debe ser sobre-escrita en el m
 void BasicTimer3_Callback(void);
 void BasicTimer4_Callback(void);
 void BasicTimer5_Callback(void);
+void Capture_TIM2_Ch1_Callback(void);
+void Capture_TIM2_Ch2_Callback(void);
+void Capture_TIM2_Ch3_Callback(void);
+void Capture_TIM2_Ch4_Callback(void);
+void Capture_TIM3_Ch1_Callback(void);
+void Capture_TIM3_Ch2_Callback(void);
+void Capture_TIM3_Ch3_Callback(void);
+void Capture_TIM3_Ch4_Callback(void);
+void Capture_TIM4_Ch1_Callback(void);
+void Capture_TIM4_Ch2_Callback(void);
+void Capture_TIM4_Ch3_Callback(void);
+void Capture_TIM4_Ch4_Callback(void);
+void Capture_TIM5_Ch1_Callback(void);
+void Capture_TIM5_Ch2_Callback(void);
+void Capture_TIM5_Ch3_Callback(void);
+void Capture_TIM5_Ch4_Callback(void);
 
 void startTimer (BasicTimer_Handler_t *ptrTimerConfig);
 void stopTimer (BasicTimer_Handler_t *ptrTimerConfig);
