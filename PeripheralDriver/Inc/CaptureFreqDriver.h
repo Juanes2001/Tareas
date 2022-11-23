@@ -10,6 +10,7 @@
 
 
 #include "stm32f4xx.h"
+#include <stdlib.h>
 
 #define CAPTURE_CHANNEL_1   0
 #define CAPTURE_CHANNEL_2   1
@@ -49,7 +50,9 @@ typedef struct
 void capture_Config (Capture_Handler_t *ptrCaptureHandler);
 void startCapture (Capture_Handler_t *ptrCaptureHandler);
 void stopCapture (Capture_Handler_t *ptrCaptureHandler);
-
+uint32_t timeStamp(Capture_Handler_t  *ptrCaptureHandler);
+uint32_t getFreq(Capture_Handler_t  *ptrCaptureHandler, uint32_t ts1, uint32_t ts2 );
+void clean(Capture_Handler_t *ptrCaptureHandler);
 
 
 #endif /* CAPTUREFREQDRIVER_H_ */

@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-//handlers GPIO para el led blinky, el pin Tx y Rx, y el pin de salida de señal de reloj
+//handlers GPIO para el led blinky, el pin Tx y Rx, y el pin de salida de señal PWM y el pin de captura
 
 GPIO_Handler_t handlerPINLED       = {0};
 GPIO_Handler_t handlerUSARTPinTx   = {0};
@@ -45,9 +45,15 @@ USART_Handler_t handlerUSART2Capture    = {0};
 //Capture handler
 Capture_Handler_t handlerCaptureFreq = {0};
 
+//Variables usadas en la tarea, timestamp1 el tiempo inferior del periodo y timestamp2 es el tiempo superior
+//deltaTimestamp es la diferencia de tiempo, es decir, el periodo de la señal dependiendo del
+//prescaler, counterCapture es un contador bandera para almacenar de forma logica los tiempos
+//inferior y superior, auxData son los caracteres comandos que se envian desde el coolterm
+//flag, es la bandera correspondiente a la interrupcion por letura de flanco. bufferData como
+//siempre almacenara el mensaje con el dato calculado del periodo.
 uint32_t timestamp1 = 0;
 uint32_t timestamp2 = 0;
-uint32_t deltaTimestamp = 0;
+int32_t deltaTimestamp = 0;
 uint8_t counterCapture = 0;
 uint8_t auxData = '\0';
 uint8_t flag = RESET;
@@ -55,67 +61,58 @@ char bufferData[64];
 
 void initSystem(void);
 
-//Aqui se ejecuta todo el programa , el corazon del mismo
+//Este es el corazon del programa
 int main(void){
 
-	initSystem();
+		initSystem();
 
-	while(1){
-
-
-		if (auxData != '\0'){
-			if (auxData == 's'){
-				startPwmSignal(&handlerPWMFreq);
-				writeMsg(&handlerUSART2Capture, "Timer5 ON \n \r");
-				auxData = '\0';
-			}else if (auxData == 'p'){
-				stopPwmSignal(&handlerPWMFreq);
-				writeMsg(&handlerUSART2Capture, "Timer5 OFF \n \r");
-				auxData = '\0';
-			} else if (auxData == 'l'){
-				startCapture(&handlerCaptureFreq);
-			}
-
-			if (flag){
-				if (counterCapture == 0){
-					timestamp1 = TIM5->CCR2;
-					counterCapture++;
-					flag = RESET;
-				}else if (counterCapture == 1){
-					stopCapture(&handlerCaptureFreq);
-					timestamp2 = TIM5->CCR2;
-					flag = RESET;
-					deltaTimestamp = (timestamp2 - timestamp1);
-					sprintf(bufferData, "period = %ums, t1 = %u , t2 = %u \n\r",(unsigned int) deltaTimestamp,(unsigned int) timestamp1,(unsigned int) timestamp2);
+		while(1){
+			//Con el comando l desde el coolterm podemos visualizar el valor del periodo de la señal PWM
+			if (auxData != '\0'){
+				if (auxData == 'l'){
+					sprintf(bufferData, "period = %ums \n\r",(unsigned int) deltaTimestamp);
 					writeMsg(&handlerUSART2Capture, bufferData);
-					counterCapture = 0;
-					timestamp1 = 0;
-					timestamp2 = 0;
 					auxData = '\0';
+
 				}
 			}
-		}
+
+			// Este condicional calculara el periodo de la señal mediante interrupciones
+			if (flag){
+				if (counterCapture == 0){
+					clean(&handlerCaptureFreq);
+					timestamp1 = timeStamp(&handlerCaptureFreq);
+					counterCapture++;
+				}else if (counterCapture == 1){
+					timestamp2 =timeStamp(&handlerCaptureFreq);
+					deltaTimestamp = getFreq(&handlerCaptureFreq, timestamp1, timestamp2);
+					counterCapture = 0;
+				}
+				flag = RESET;
+			}
+
 	}
 }
 
-
 void initSystem(void){
-
-	handlerPINCapture.pGPIOx                             = GPIOA;
+	//Pin de recepcion de señal B4 correspondiente a el canal 1 del TIM3 junto con el handler
+	//de captura con un prescaler de 1 a 1 y un tiempo entre cuentas de 100 micro segundos
+	handlerPINCapture.pGPIOx                             = GPIOB;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinAltFunMode  = AF2;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerPINCapture.GPIO_PinConfig.GPIO_PinNumber      = PIN_1;
+	handlerPINCapture.GPIO_PinConfig.GPIO_PinNumber      = PIN_4;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPINCapture.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPINCapture);
 
-	handlerCaptureFreq.ptrTIMx                 = TIM5;
-	handlerCaptureFreq.config.channel          = CAPTURE_CHANNEL_2;
+	handlerCaptureFreq.ptrTIMx                 = TIM3;
+	handlerCaptureFreq.config.channel          = CAPTURE_CHANNEL_1;
 	handlerCaptureFreq.config.edgeSignal       = CAPTURE_FALLING_EDGE;
 	handlerCaptureFreq.config.prescalerCapture = CAPTURE_PREESCALER_1_1;
-	handlerCaptureFreq.config.timerSpeed       = CAPTURE_TIMER_SPEED_10us;
+	handlerCaptureFreq.config.timerSpeed       = CAPTURE_TIMER_SPEED_100us;
 	capture_Config(&handlerCaptureFreq);
+	startCapture(&handlerCaptureFreq);
 
 	//PIN LED para el blinky junto con su timer configurado con sus nuevas macros que corresponden
 	//a la nueva velocidad de preescalamiento
@@ -169,30 +166,33 @@ void initSystem(void){
 	handlerUSART2Capture.USART_Config.USART_parityError = 0;
 	USART_Config(&handlerUSART2Capture);
 
-	handlerPINPwm.pGPIOx = GPIOB;
+	//PIN A0 como salida de PWM en el canal 1 del TIM5.
+
+	handlerPINPwm.pGPIOx = GPIOA;
 	handlerPINPwm.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
 	handlerPINPwm.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	handlerPINPwm.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINPwm.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
+	handlerPINPwm.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
 	handlerPINPwm.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPINPwm.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPINPwm);
 
-	handlerPWMFreq.ptrTIMx                = TIM3;
+	handlerPWMFreq.ptrTIMx                = TIM5;
 	handlerPWMFreq.config.channel         = PWM_CHANNEL_1;
 	handlerPWMFreq.config.duttyCicle      = 50;
-	handlerPWMFreq.config.periodo         = 4000;
+	handlerPWMFreq.config.periodo         = 600;
 	handlerPWMFreq.config.prescaler       = PWM_SPEED_100us;
 	pwm_Config(&handlerPWMFreq);
+	startPwmSignal(&handlerPWMFreq);
 
 
 }
-
+//Callback para el blinky
 void BasicTimer2_Callback(void){
 	GPIOxTooglePin(&handlerPINLED);
 }
-
-void Capture_TIM5_Ch2_Callback(void){
+//Callback para captura de frecuencia de TIM3 canal 1
+void Capture_TIM3_Ch1_Callback(void){
 	flag = SET;
 }
 

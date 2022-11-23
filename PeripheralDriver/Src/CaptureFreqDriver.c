@@ -6,6 +6,7 @@
  */
 
 #include "CaptureFreqDriver.h"
+#include <stdlib.h>
 
 
 void capture_Config (Capture_Handler_t *ptrCaptureHandler){
@@ -76,9 +77,6 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1NP);
 			}
 
-			//Activamos el modo captura
-			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC1E;
-
 			//Ademas activamos las interrupciones por conteo de tiempo en flanco
 			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC1IE;
 
@@ -104,12 +102,9 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC2NP);
 			}else{
 				//Configuramos 01, para falling edge
-				ptrCaptureHandler->ptrTIMx->CCER |= (TIM_CCER_CC1P);
-				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC1NP);
+				ptrCaptureHandler->ptrTIMx->CCER |= (TIM_CCER_CC2P);
+				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC2NP);
 			}
-
-			//Activamos el modo captura
-			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC2E;
 
 			//Ademas activamos las interrupciones por conteo de tiempo en flanco
 			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC2IE;
@@ -138,9 +133,6 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				ptrCaptureHandler->ptrTIMx->CCER |= (TIM_CCER_CC3P);
 				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC3NP);
 			}
-
-			//Activamos el modo captura
-			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC3E;
 
 			//Ademas activamos las interrupciones por conteo de tiempo en flanco
 			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC3IE;
@@ -171,8 +163,6 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 				ptrCaptureHandler->ptrTIMx->CCER &= ~(TIM_CCER_CC4NP);
 			}
 
-			//Activamos el modo captura
-			ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC4E;
 
 			//Ademas activamos las interrupciones por conteo de tiempo en flanco
 			ptrCaptureHandler->ptrTIMx->DIER |= TIM_DIER_CC4IE;
@@ -208,21 +198,170 @@ void capture_Config (Capture_Handler_t *ptrCaptureHandler){
 
 	__enable_irq();
 
+
 }
 
 void startCapture (Capture_Handler_t *ptrCaptureHandler){
-	// Comenzamos el conteo del timer con el counter en 0
-	ptrCaptureHandler->ptrTIMx->CNT = 0;
-	ptrCaptureHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
+	switch (ptrCaptureHandler->config.channel) {
+			case CAPTURE_CHANNEL_1:
+				//Activamos el modo captura
+				ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC1E;
+				break;
+			case CAPTURE_CHANNEL_2:
+				//Activamos el modo captura
+				ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC2E;
+
+				break;
+			case CAPTURE_CHANNEL_3:
+				//Activamos el modo captura
+				ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC3E;
+
+				break;
+			case CAPTURE_CHANNEL_4:
+				//Activamos el modo captura
+				ptrCaptureHandler->ptrTIMx->CCER |= TIM_CCER_CC4E;
+
+				break;
+			default:
+				__NOP();
+				break;
+		}
+		// Comenzamos el conteo del timer
+		ptrCaptureHandler->ptrTIMx->CR1 |= TIM_CR1_CEN;
 }
 
 void stopCapture (Capture_Handler_t *ptrCaptureHandler){
-	// Comenzamos el conteo del timer
-	ptrCaptureHandler->ptrTIMx->CNT = 0;
+	// Paramos el conteo del timer
 	ptrCaptureHandler->ptrTIMx->CR1 &= ~TIM_CR1_CEN;
+	switch (ptrCaptureHandler->config.channel) {
+		case CAPTURE_CHANNEL_1:
+
+			//Activamos el modo captura
+			ptrCaptureHandler->ptrTIMx->CCER &= ~TIM_CCER_CC1E;
+
+
+			break;
+		case CAPTURE_CHANNEL_2:
+			//Activamos el modo captura
+			ptrCaptureHandler->ptrTIMx->CCER &= ~TIM_CCER_CC2E;
+
+			break;
+		case CAPTURE_CHANNEL_3:
+
+			//Activamos el modo captura
+			ptrCaptureHandler->ptrTIMx->CCER &= ~TIM_CCER_CC3E;
+
+			break;
+		case CAPTURE_CHANNEL_4:
+
+			//Activamos el modo captura
+			ptrCaptureHandler->ptrTIMx->CCER &= ~TIM_CCER_CC4E;
+
+			break;
+		default:
+			__NOP();
+			break;
+	}
+
 }
 
 
 
+uint32_t timeStamp(Capture_Handler_t *ptrCaptureHandler){
 
+	uint32_t timestamp = 0;
+
+	switch(ptrCaptureHandler->config.channel){
+		case CAPTURE_CHANNEL_1:{
+
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR1;
+
+			break;
+		}
+		case CAPTURE_CHANNEL_2:{
+
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR2;
+
+
+			break;
+		}
+		case CAPTURE_CHANNEL_3:{
+
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR3;
+			break;
+		}
+		case CAPTURE_CHANNEL_4:{
+
+			// Capturamos el valor del tiempo almacenado en el CCRx
+			timestamp = ptrCaptureHandler->ptrTIMx->CCR4;
+
+			break;
+		}
+		default: {
+			break;
+		}
+	}
+
+	return timestamp;
+
+}
+
+
+uint32_t getFreq(Capture_Handler_t *ptrCaptureHandler, uint32_t ts1, uint32_t ts2){
+
+
+	int32_t delta = 0;
+	switch (ptrCaptureHandler->config.prescalerCapture) {
+		case CAPTURE_PREESCALER_1_1:
+			delta = abs(ts2-ts1);
+			break;
+		case CAPTURE_PREESCALER_2_1:
+			delta = abs(ts2-ts1)/2;
+			break;
+		case CAPTURE_PREESCALER_4_1:
+			delta = abs(ts2-ts1)/4;
+			break;
+		case CAPTURE_PREESCALER_8_1:
+			delta = abs(ts2-ts1)/8;
+			break;
+		default:
+			__NOP();
+			break;
+	}
+
+	delta = (delta*ptrCaptureHandler->config.timerSpeed)/16000;
+
+	return delta;
+
+}
+
+void clean(Capture_Handler_t *ptrCaptureHandler){
+
+	ptrCaptureHandler->ptrTIMx->CNT = 0;
+
+	switch(ptrCaptureHandler->config.channel){
+		case CAPTURE_CHANNEL_1:{
+			ptrCaptureHandler->ptrTIMx->CCR1 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_2:{
+			ptrCaptureHandler->ptrTIMx->CCR2 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_3:{
+			ptrCaptureHandler->ptrTIMx->CCR3 = 0;
+			break;
+		}
+		case CAPTURE_CHANNEL_4:{
+			ptrCaptureHandler->ptrTIMx->CCR4 = 0;
+			break;
+		}
+		default: {
+			break;
+		}
+	}
+}
 

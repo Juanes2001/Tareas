@@ -1,5 +1,6 @@
 "./Src/AdcDriver.o"
 "./Src/BasicTimer.o"
+"./Src/CaptureFreqDriver.o"
 "./Src/EXTIDriver.o"
 "./Src/GPIOxDriver.o"
 "./Src/I2CDriver.o"
