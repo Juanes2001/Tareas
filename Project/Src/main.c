@@ -33,6 +33,7 @@ GPIO_Handler_t handlerPINT5 = {0};
 GPIO_Handler_t handlerPINT6 = {0};
 
 GPIO_Handler_t handlerLEDPin = {0};
+GPIO_Handler_t handlerPWMPin = {0};
 
 
 GPIO_Handler_t handlerUSARTPinTx       = {0};
@@ -44,11 +45,15 @@ BasicTimer_Handler_t handlerBlinky = {0};
 
 USART_Handler_t handlerUSART2    = {0};
 
+PWM_Handler_t handlerPWMControl = {0};
+
 
 uint8_t auxData  = '\0';
 char bufferData[64];
 uint8_t flag = RESET;
 uint8_t counterMotor = 0;
+uint8_t duttyUp = 0;
+uint8_t duttyDown = 0;
 
 
 
@@ -82,6 +87,31 @@ int main (void){
 				GPIO_WritePin(&handlerPINT5, RESET);
 				GPIO_WritePin(&handlerPINT6, RESET);
 			}
+			else if (auxData == 'm'){
+				if (handlerPWMControl.ptrTIMx->CR1 & TIM_CR1_CEN){
+					stopPwmSignal(&handlerPWMControl);
+					writeChar(&handlerUSART2, auxData);
+					auxData = '\0';
+
+				}else {
+					startPwmSignal(&handlerPWMControl);
+					writeChar(&handlerUSART2, auxData);
+					auxData = '\0';
+				}
+
+			}else if (auxData == 'u'){
+				duttyUp = handlerPWMControl.ptrTIMx->CCR1 + 1;
+				updateDuttyCycle(&handlerPWMControl, duttyUp);
+				auxData = '\0';
+
+			}else if (auxData == 'd'){
+				duttyDown = handlerPWMControl.ptrTIMx->CCR1 - 1;
+				updateDuttyCycle(&handlerPWMControl, duttyDown);
+				auxData = '\0';
+
+			}
+
+
 		}
 
 		// Aqui se almacenara la secuencia de giro la cual se ejecutara repetidas veces para hacer girar el motor
@@ -315,6 +345,25 @@ void initSystem(void){
 	handlerBlinky.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerBlinky);
 	startTimer(&handlerBlinky);
+
+	handlerPWMPin.pGPIOx = GPIOB;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinNumber = PIN_6;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPWMPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPWMPin);
+
+
+	handlerPWMControl.ptrTIMx           = TIM4;
+	handlerPWMControl.config.channel    = PWM_CHANNEL_1;
+	handlerPWMControl.config.duttyCicle = 50;
+	handlerPWMControl.config.periodo    = 100;
+	handlerPWMControl.config.prescaler  = BTIMER_SPEED_100us;
+	pwm_Config(&handlerPWMControl);
+
+
 
 }
 
