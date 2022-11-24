@@ -32,12 +32,15 @@ GPIO_Handler_t handlerPINT4 = {0};
 GPIO_Handler_t handlerPINT5 = {0};
 GPIO_Handler_t handlerPINT6 = {0};
 
+GPIO_Handler_t handlerLEDPin = {0};
+
 
 GPIO_Handler_t handlerUSARTPinTx       = {0};
 GPIO_Handler_t handlerUSARTPinRx       = {0};
 
 //Timer para controlador de velocidades
 BasicTimer_Handler_t handlerTIMMotor = {0};
+BasicTimer_Handler_t handlerBlinky = {0};
 
 USART_Handler_t handlerUSART2    = {0};
 
@@ -61,6 +64,26 @@ int main (void){
 
 	while(1){
 
+		if (auxData != '\0'){
+			if (auxData == 's'){
+				startTimer(&handlerTIMMotor);
+				writeChar(&handlerUSART2, auxData);
+				auxData = '\0';
+				counterMotor = RESET;
+
+			}else if (auxData == 'p'){
+				stopTimer(&handlerTIMMotor);
+				writeChar(&handlerUSART2, auxData);
+				auxData = '\0';
+				GPIO_WritePin(&handlerPINT1, RESET);
+				GPIO_WritePin(&handlerPINT2, RESET);
+				GPIO_WritePin(&handlerPINT3, RESET);
+				GPIO_WritePin(&handlerPINT4, RESET);
+				GPIO_WritePin(&handlerPINT5, RESET);
+				GPIO_WritePin(&handlerPINT6, RESET);
+			}
+		}
+
 		// Aqui se almacenara la secuencia de giro la cual se ejecutara repetidas veces para hacer girar el motor
 		if (flag){
 			switch (counterMotor) {
@@ -72,6 +95,7 @@ int main (void){
 					GPIO_WritePin(&handlerPINT4, RESET);
 					GPIO_WritePin(&handlerPINT5, RESET);
 					GPIO_WritePin(&handlerPINT6, SET);
+
 
 
 					break;
@@ -129,7 +153,7 @@ int main (void){
 			}//Fin del switch case
 			flag = RESET;
 			if (counterMotor >= 6){
-				counterMotor = SET;
+				counterMotor = RESET;
 			}
 		}
 
@@ -240,8 +264,8 @@ void initSystem(void){
 	handlerTIMMotor.ptrTIMx = TIM2;
 	handlerTIMMotor.TIMx_Config.TIMx_interruptEnable = 1;
 	handlerTIMMotor.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerTIMMotor.TIMx_Config.TIMx_period = 2500;
-	handlerTIMMotor.TIMx_Config.TIMx_speed = BTIMER_SPEED_10us;
+	handlerTIMMotor.TIMx_Config.TIMx_period = 5000;
+	handlerTIMMotor.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerTIMMotor);
 
 	handlerUSARTPinTx.pGPIOx = GPIOA;
@@ -273,12 +297,36 @@ void initSystem(void){
 	handlerUSART2.USART_Config.USART_parityError = 0;
 	USART_Config(&handlerUSART2);
 
+
+	handlerLEDPin.pGPIOx = GPIOA;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinAltFunMode = AF7;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerLEDPin.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerLEDPin);
+	GPIO_WritePin(&handlerLEDPin, SET);
+
+	handlerBlinky.ptrTIMx = TIM3;
+	handlerBlinky.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerBlinky.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
+	handlerBlinky.TIMx_Config.TIMx_period          = 2500;
+	handlerBlinky.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerBlinky);
+	startTimer(&handlerBlinky);
+
 }
 
 void BasicTimer2_Callback(void){
 	flag = SET;
 	counterMotor++;
 }
+
+void BasicTimer3_Callback(void){
+	GPIOxTooglePin(&handlerLEDPin);
+}
+
 
 void usart2Rx_Callback(void){
 	auxData = getRxData();
