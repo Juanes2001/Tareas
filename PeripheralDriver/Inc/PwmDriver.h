@@ -18,6 +18,7 @@
 #define PWM_DUTTY_0_PERCENT		0
 #define PWM_DUTTY_100_PERCENT	100
 
+#define PWM_SPEED_1us	16
 #define PWM_SPEED_10us	160
 #define PWM_SPEED_100us	1600
 #define PWM_SPEED_1ms	16000

@@ -166,9 +166,9 @@ void enableOutput(PWM_Handler_t *ptrPwmHandler) {
  * la frecuencia.
  * */
 void setFrequency(PWM_Handler_t *ptrPwmHandler){
-
-	// Cargamos el valor del prescaler, nos define la velocidad (en ns) a la cual
-	// se incrementa el Timer
+//
+//	// Cargamos el valor del prescaler, nos define la velocidad (en ns) a la cual
+//	// se incrementa el Timer
 	ptrPwmHandler->ptrTIMx->PSC = ptrPwmHandler->config.prescaler;
 
 	// Cargamos el valor del ARR, el cual es el límite de incrementos del Timer
@@ -180,7 +180,9 @@ void setFrequency(PWM_Handler_t *ptrPwmHandler){
 /* Función para actualizar la frecuencia, funciona de la mano con setFrequency */
 void updateFrequency(PWM_Handler_t *ptrPwmHandler, uint16_t newFreq){
 	// Actualizamos el registro que manipula el periodo
-    ptrPwmHandler->config.periodo = newFreq*10;
+
+	ptrPwmHandler->config.periodo = newFreq;
+
 
 	// Llamamos a la fucnión que cambia la frecuencia
 	setFrequency(ptrPwmHandler);

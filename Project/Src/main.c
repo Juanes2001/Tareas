@@ -54,6 +54,8 @@ uint8_t flag = RESET;
 uint8_t counterMotor = 0;
 uint8_t duttyUp = 0;
 uint8_t duttyDown = 0;
+uint16_t freqUp = 0;
+uint16_t freqDown = 0;
 
 
 
@@ -100,15 +102,75 @@ int main (void){
 				}
 
 			}else if (auxData == 'u'){
-				duttyUp = handlerPWMControl.ptrTIMx->CCR1 + 1;
-				updateDuttyCycle(&handlerPWMControl, duttyUp);
-				auxData = '\0';
+				duttyUp = handlerPWMControl.config.duttyCicle;
+				duttyUp++;
+				if (duttyUp >= 100){
+					updateDuttyCycle(&handlerPWMControl, 100);
+				}else{
+					updateDuttyCycle(&handlerPWMControl, duttyUp);
+					auxData = '\0';
+				}
 
 			}else if (auxData == 'd'){
-				duttyDown = handlerPWMControl.ptrTIMx->CCR1 - 1;
-				updateDuttyCycle(&handlerPWMControl, duttyDown);
-				auxData = '\0';
+				duttyDown = handlerPWMControl.config.duttyCicle;
+				duttyDown--;
+				if (duttyDown == 0){
+					updateDuttyCycle(&handlerPWMControl, 1);
+				}else{
+					updateDuttyCycle(&handlerPWMControl, duttyDown);
+					auxData = '\0';
+				}
 
+			}
+				else if (auxData == '-'){
+				switch (handlerPWMControl.config.prescaler) {
+					case PWM_SPEED_100us:
+						freqDown = (handlerPWMControl.config.periodo) + 1;
+						break;
+
+					case PWM_SPEED_10us:
+						freqDown = (handlerPWMControl.config.periodo) + 1;
+						break;
+					case PWM_SPEED_1us:
+						freqDown = (handlerPWMControl.config.periodo) + 1;
+						break;
+					case PWM_SPEED_1ms:
+						freqDown = handlerPWMControl.config.periodo + 1;
+						break;
+					default:
+						__NOP();
+						break;
+				}
+				if (freqDown == 0){
+					updateFrequency(&handlerPWMControl, 1);
+				}else{
+					updateFrequency(&handlerPWMControl, freqDown);
+					auxData = '\0';
+				}
+
+			}else if (auxData == '+'){
+				switch (handlerPWMControl.config.prescaler) {
+					case PWM_SPEED_100us:
+						freqUp = (handlerPWMControl.config.periodo)/10 - 1;
+						break;
+
+					case PWM_SPEED_10us:
+						freqUp = (handlerPWMControl.config.periodo)/100 - 1;
+						break;
+					case PWM_SPEED_1ms:
+						freqUp= handlerPWMControl.config.periodo - 1;
+						break;
+					default:
+						__NOP();
+						break;
+				}
+
+				if (freqUp == 0){
+					updateFrequency(&handlerPWMControl, 1);
+				}else{
+					updateFrequency(&handlerPWMControl, freqUp);
+					auxData = '\0';
+				}
 			}
 
 
@@ -359,8 +421,8 @@ void initSystem(void){
 	handlerPWMControl.ptrTIMx           = TIM4;
 	handlerPWMControl.config.channel    = PWM_CHANNEL_1;
 	handlerPWMControl.config.duttyCicle = 50;
-	handlerPWMControl.config.periodo    = 100;
-	handlerPWMControl.config.prescaler  = BTIMER_SPEED_100us;
+	handlerPWMControl.config.periodo    = 10;
+	handlerPWMControl.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControl);
 
 
