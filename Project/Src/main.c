@@ -25,22 +25,16 @@
 
 
 //Pines controladores para el motor
-GPIO_Handler_t handlerPINT1 = {0};
-GPIO_Handler_t handlerPINT2 = {0};
-GPIO_Handler_t handlerPINT3 = {0};
-GPIO_Handler_t handlerPINT4 = {0};
-GPIO_Handler_t handlerPINT5 = {0};
-GPIO_Handler_t handlerPINT6 = {0};
 
 GPIO_Handler_t handlerLEDPin = {0};
 GPIO_Handler_t handlerPWMPin = {0};
+ADC_Config_t handlerADCJoy = {0};
 
 
 GPIO_Handler_t handlerUSARTPinTx       = {0};
 GPIO_Handler_t handlerUSARTPinRx       = {0};
 
 //Timer para controlador de velocidades
-BasicTimer_Handler_t handlerTIMMotor = {0};
 BasicTimer_Handler_t handlerBlinky = {0};
 
 USART_Handler_t handlerUSART2    = {0};
@@ -62,8 +56,6 @@ uint16_t freqDown = 0;
 
 
 void initSystem(void);
-void startMotor(void);
-void updateRPMMotor(uint8_t period);
 
 int main (void){
 
@@ -72,24 +64,7 @@ int main (void){
 	while(1){
 
 		if (auxData != '\0'){
-			if (auxData == 's'){
-				startTimer(&handlerTIMMotor);
-				writeChar(&handlerUSART2, auxData);
-				auxData = '\0';
-				counterMotor = RESET;
-
-			}else if (auxData == 'p'){
-				stopTimer(&handlerTIMMotor);
-				writeChar(&handlerUSART2, auxData);
-				auxData = '\0';
-				GPIO_WritePin(&handlerPINT1, RESET);
-				GPIO_WritePin(&handlerPINT2, RESET);
-				GPIO_WritePin(&handlerPINT3, RESET);
-				GPIO_WritePin(&handlerPINT4, RESET);
-				GPIO_WritePin(&handlerPINT5, RESET);
-				GPIO_WritePin(&handlerPINT6, RESET);
-			}
-			else if (auxData == 'm'){
+			if (auxData == 'm'){
 				if (handlerPWMControl.ptrTIMx->CR1 & TIM_CR1_CEN){
 					stopPwmSignal(&handlerPWMControl);
 					writeChar(&handlerUSART2, auxData);
@@ -101,7 +76,7 @@ int main (void){
 					auxData = '\0';
 				}
 
-			}else if (auxData == 'u'){
+			}else if (auxData == 'd'){
 				duttyUp = handlerPWMControl.config.duttyCicle;
 				duttyUp++;
 				if (duttyUp >= 100){
@@ -111,7 +86,7 @@ int main (void){
 					auxData = '\0';
 				}
 
-			}else if (auxData == 'd'){
+			}else if (auxData == 'u'){
 				duttyDown = handlerPWMControl.config.duttyCicle;
 				duttyDown--;
 				if (duttyDown == 0){
@@ -176,189 +151,12 @@ int main (void){
 
 		}
 
-		// Aqui se almacenara la secuencia de giro la cual se ejecutara repetidas veces para hacer girar el motor
-		if (flag){
-			switch (counterMotor) {
-				case 1:
-
-					GPIO_WritePin(&handlerPINT1, SET);
-					GPIO_WritePin(&handlerPINT2, RESET);
-					GPIO_WritePin(&handlerPINT3, RESET);
-					GPIO_WritePin(&handlerPINT4, RESET);
-					GPIO_WritePin(&handlerPINT5, RESET);
-					GPIO_WritePin(&handlerPINT6, SET);
-
-
-
-					break;
-				case 2:
-
-					GPIO_WritePin(&handlerPINT1, RESET);
-					GPIO_WritePin(&handlerPINT2, SET);
-					GPIO_WritePin(&handlerPINT3, RESET);
-					GPIO_WritePin(&handlerPINT4, RESET);
-					GPIO_WritePin(&handlerPINT5, RESET);
-					GPIO_WritePin(&handlerPINT6, SET);
-
-					break;
-				case 3:
-
-					GPIO_WritePin(&handlerPINT1, RESET);
-					GPIO_WritePin(&handlerPINT2, SET);
-					GPIO_WritePin(&handlerPINT3, RESET);
-					GPIO_WritePin(&handlerPINT4, SET);
-					GPIO_WritePin(&handlerPINT5, RESET);
-					GPIO_WritePin(&handlerPINT6, RESET);
-					break;
-				case 4:
-
-					GPIO_WritePin(&handlerPINT1, RESET);
-					GPIO_WritePin(&handlerPINT2, RESET);
-					GPIO_WritePin(&handlerPINT3, SET);
-					GPIO_WritePin(&handlerPINT4, SET);
-					GPIO_WritePin(&handlerPINT5, RESET);
-					GPIO_WritePin(&handlerPINT6, RESET);
-
-					break;
-				case 5:
-
-					GPIO_WritePin(&handlerPINT1, RESET);
-					GPIO_WritePin(&handlerPINT2, RESET);
-					GPIO_WritePin(&handlerPINT3, SET);
-					GPIO_WritePin(&handlerPINT4, RESET);
-					GPIO_WritePin(&handlerPINT5, SET);
-					GPIO_WritePin(&handlerPINT6, RESET);
-					break;
-				case 6:
-
-					GPIO_WritePin(&handlerPINT1, SET);
-					GPIO_WritePin(&handlerPINT2, RESET);
-					GPIO_WritePin(&handlerPINT3, RESET);
-					GPIO_WritePin(&handlerPINT4, RESET);
-					GPIO_WritePin(&handlerPINT5, SET);
-					GPIO_WritePin(&handlerPINT6, RESET);
-
-					break;
-				default:
-					__NOP();
-					break;
-			}//Fin del switch case
-			flag = RESET;
-			if (counterMotor >= 6){
-				counterMotor = RESET;
-			}
-		}
-
-
-
-//		if (auxData != '\0'){
-//			if (auxData == '1'){
-//				GPIOxTooglePin(&handlerPINT1);
-//				sprintf(bufferData,"1 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF1));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//
-//			}else if (auxData == '2'){
-//				GPIOxTooglePin(&handlerPINF2);
-//				sprintf(bufferData,"2 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF2));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//			}else if (auxData == '3'){
-//				GPIOxTooglePin(&handlerPINF3);
-//				sprintf(bufferData,"3 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF3));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//			}else if (auxData == '4'){
-//				GPIOxTooglePin(&handlerPINF4);
-//				sprintf(bufferData,"4 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF4));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//			}else if (auxData == '5'){
-//				GPIOxTooglePin(&handlerPINF5);
-//				sprintf(bufferData,"5 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF5));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//			}else if (auxData == '6'){
-//				GPIOxTooglePin(&handlerPINF6);
-//				sprintf(bufferData,"6 = %u \n\r",(unsigned int) GPIO_ReadPin(&handlerPINF6));
-//				writeMsg(&handlerUSART2, bufferData);
-//				auxData = '\0';
-//			}
-//		}
-
 	}
 
 }
 
 void initSystem(void){
-	//Pines digitales para
-	handlerPINT1.pGPIOx = GPIOC;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinNumber = PIN_0;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT1);
-	GPIO_WritePin(&handlerPINT1, RESET);
 
-	handlerPINT2.pGPIOx = GPIOC;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinNumber = PIN_1;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT2.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT2);
-	GPIO_WritePin(&handlerPINT2, RESET);
-
-	handlerPINT3.pGPIOx = GPIOC;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinNumber = PIN_2;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT3.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT3);
-	GPIO_WritePin(&handlerPINT3, RESET);
-
-	handlerPINT4.pGPIOx = GPIOC;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinNumber = PIN_3;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT4.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT4);
-	GPIO_WritePin(&handlerPINT4, RESET);
-
-	handlerPINT5.pGPIOx = GPIOC;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinNumber = PIN_4;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT5.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT5);
-	GPIO_WritePin(&handlerPINT5, RESET);
-
-	handlerPINT6.pGPIOx = GPIOC;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinNumber = PIN_5;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
-	handlerPINT6.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
-	GPIO_Config(&handlerPINT6);
-	GPIO_WritePin(&handlerPINT6, RESET);
-
-
-	handlerTIMMotor.ptrTIMx = TIM2;
-	handlerTIMMotor.TIMx_Config.TIMx_interruptEnable = 1;
-	handlerTIMMotor.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerTIMMotor.TIMx_Config.TIMx_period = 5000;
-	handlerTIMMotor.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
-	BasicTimer_Config(&handlerTIMMotor);
 
 	handlerUSARTPinTx.pGPIOx = GPIOA;
 	handlerUSARTPinTx.GPIO_PinConfig.GPIO_PinAltFunMode = AF7;
@@ -400,7 +198,7 @@ void initSystem(void){
 	GPIO_Config(&handlerLEDPin);
 	GPIO_WritePin(&handlerLEDPin, SET);
 
-	handlerBlinky.ptrTIMx = TIM3;
+	handlerBlinky.ptrTIMx = TIM2;
 	handlerBlinky.TIMx_Config.TIMx_interruptEnable = 1;
 	handlerBlinky.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
 	handlerBlinky.TIMx_Config.TIMx_period          = 2500;
@@ -420,19 +218,24 @@ void initSystem(void){
 
 	handlerPWMControl.ptrTIMx           = TIM4;
 	handlerPWMControl.config.channel    = PWM_CHANNEL_1;
-	handlerPWMControl.config.duttyCicle = 50;
-	handlerPWMControl.config.periodo    = 10;
-	handlerPWMControl.config.prescaler  = PWM_SPEED_1us;
+	handlerPWMControl.config.duttyCicle = 95;
+	handlerPWMControl.config.periodo    = 200;
+	handlerPWMControl.config.prescaler  = PWM_SPEED_100us;
 	pwm_Config(&handlerPWMControl);
 
 
+	handlerADCJoy.channelVector[0] = 0;
+	handlerADCJoy.channelVector[1] = 1;
+	handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
+	handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
+	handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
+	ADC_ConfigMultichannel(&handlerADCJoy, 2);
+
+
+
 
 }
 
-void BasicTimer2_Callback(void){
-	flag = SET;
-	counterMotor++;
-}
 
 void BasicTimer3_Callback(void){
 	GPIOxTooglePin(&handlerLEDPin);
@@ -443,13 +246,5 @@ void usart2Rx_Callback(void){
 	auxData = getRxData();
 }
 
-void startMotor(void){
-	startTimer(&handlerTIMMotor);
-}
 
-void updateRPMMotor(uint8_t period){
-	stopTimer(&handlerTIMMotor);
-	TIM2->ARR = period - 1;
-	startTimer(&handlerTIMMotor);
-}
 
