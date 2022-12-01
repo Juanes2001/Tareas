@@ -14,7 +14,7 @@
 
 
 /* Definiciones para funcionamiento del acelerometro */
-#define ACCEL_ADDRESS 		0b1101001;
+#define ACCEL_ADDRESS 		0b1101001
 #define ACCEL_XOUT_H 		59
 #define ACCEL_XOUT_L		60
 #define ACCEL_YOUT_H		61
@@ -25,6 +25,7 @@
 #define PWR_MGMT_l			107
 #define WHO_AM_I			117
 
+void writeAccelValues(I2C_Handler_t *ptrHandlerI2C, uint8_t address , uint8_t newValue);
 void readAccelValues(I2C_Handler_t *ptrHandlerI2C);
 int16_t X_Accel(I2C_Handler_t *ptrHandlerI2C);
 int16_t Y_Accel(I2C_Handler_t *ptrHandlerI2C);
