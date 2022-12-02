@@ -337,7 +337,7 @@ void USART6_IRQHandler(void){
 }
 
 /*
- * Hola Manuel, tu solución no es del todo correcta, intentaste tener en cuenta la diferente velocidad de los buses APB1 y APB2,
+ * Hola Juan Esteban, tu solución no es del todo correcta, intentaste tener en cuenta la diferente velocidad de los buses APB1 y APB2,
  * pero no está escrito de forma correcta. Algunas observaciones generales:
  * - Tienes parcialmente en cuenta que el bus APB1 (USART1 y USART6) corre mas rapido que el APB2 (USART2), por lo cual toda tu
  *   configuracion es parcial y muy confusa.
