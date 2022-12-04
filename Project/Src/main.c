@@ -78,6 +78,7 @@ unsigned int thirdParameter;
 
 void initSystem(void);
 void parseCommands(char *command);
+void impulse(void);
 
 int main (void){
 
@@ -107,11 +108,7 @@ int main (void){
 				}
 			}
 
-			else if(rxData == 'a') {
-				writeChar(&handlerUSART2, rxData);
-				updateDuttyCycle(&handlerPWMControlServo, 97);
-				updateDuttyCycle(&handlerPWMControlServo, 98);
-			}
+
 
 			else if (rxData == 'd'){
 				duttyUp = handlerPWMControlMotor.config.duttyCicle;
@@ -139,6 +136,11 @@ int main (void){
 					rxData = '\0';
 				}
 
+			}
+
+			else if (rxData == 'a'){
+				writeChar(&handlerUSART2, rxData);
+				impulse();
 			}
 
 			else if (rxData == '-'){
@@ -244,7 +246,7 @@ void initSystem(void){
 	GPIO_Config(&handlerUSARTPinRx);
 
 	handlerUSART2.ptrUSARTx                      = USART2;
-	handlerUSART2.USART_Config.USART_baudrate    = USART_BAUDRATE_9600;
+	handlerUSART2.USART_Config.USART_baudrate    = USART_BAUDRATE_115200;
 	handlerUSART2.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
 	handlerUSART2.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
 	handlerUSART2.USART_Config.USART_mode        = USART_MODE_RXTX;
@@ -304,8 +306,8 @@ void initSystem(void){
 
 	handlerPWMControlMotor.ptrTIMx           = TIM4;
 	handlerPWMControlMotor.config.channel    = PWM_CHANNEL_2;
-	handlerPWMControlMotor.config.duttyCicle = 57;
-	handlerPWMControlMotor.config.periodo    = 2000;
+	handlerPWMControlMotor.config.duttyCicle = 70;
+	handlerPWMControlMotor.config.periodo    = 2500;
 	handlerPWMControlMotor.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControlMotor);
 
@@ -354,6 +356,8 @@ void initSystem(void){
 	handlerExtiConfig0.pGPIOHandler 		            = &handlerExInSWPin;
 	handlerExtiConfig0.edgeType 			            = EXTERNAL_INTERRUPT_RISING_EDGE;
 	extInt_Config(&handlerExtiConfig0);
+
+	config_SysTicksMs();
 
 
 
@@ -473,6 +477,15 @@ void parseCommands(char *command){
 		writeMsg(&handlerUSART2, "WRONG CMD, WRITE IT AGAING \n");
 	}
 
+}
+
+void impulse (void){
+//	updateDuttyCycle(&handlerPWMControlMotor, 55);
+//	delay_Ms(2000);
+//	updateDuttyCycle(&handlerPWMControlMotor, 70);
+	updateDuttyCycle(&handlerPWMControlServo, 97);
+	delay_Ms(200);
+	updateDuttyCycle(&handlerPWMControlServo, 98);
 }
 
 

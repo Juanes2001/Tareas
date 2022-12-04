@@ -11,6 +11,7 @@
 #include <stm32f4xx.h>
 
 void config_SysTicksMs(void);
-uint64_t getTicksMs(void);
+void delay_Ms (uint32_t Ms);
+
 
 #endif /* SYSTICKDRIVER_H_ */

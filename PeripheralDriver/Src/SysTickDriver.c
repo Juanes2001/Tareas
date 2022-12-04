@@ -17,7 +17,7 @@
 
 #include "SysTickDriver.h"
 
-#define SYSTICK_LOAD_VALUE		1600	//numero de ciclos en 1ms.
+#define SYSTICK_LOAD_VALUE		1600000	//numero de ciclos en 100ms.
 
 uint64_t ticks;
 
@@ -27,7 +27,7 @@ void config_SysTicksMs(void){
 	ticks = 0;
 
 	//Cargando el valor del limite de incrementos que representan 1ms
-	SysTick->LOAD = SYSTICK_LOAD_VALUE;
+	SysTick->LOAD = SYSTICK_LOAD_VALUE-1;
 
 	//Limpiamos el valor actual del Systick
 	SysTick->VAL = 0;
@@ -35,19 +35,29 @@ void config_SysTicksMs(void){
 	//Configuramos el reloj interno como el reloj para el timer
 	SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
 
-	//Desactivamos las interrupciones globales
-	__disable_irq();
-
-	//Activamos la interrupcion debida al conteo a cero del SysTick
-	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
-
-	//Matriculamos la interrupcion en el NVIC
-	__NVIC_EnableIRQ(SysTick_IRQn);
-
-	//Activamos el timer
-	SysTick->CTRL |= SysTick_CTRL_ENABLE_Msk;
-
-	//Activamos de nuevo las interrupciones globales
-	__enable_irq();
+//	//Desactivamos las interrupciones globales
+//	__disable_irq();
+//
+//	//Activamos la interrupcion debida al conteo a cero del SysTick
+//	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+//
+//	//Matriculamos la interrupcion en el NVIC
+//	__NVIC_EnableIRQ(SysTick_IRQn);
+//
+//	//Activamos de nuevo las interrupciones globales
+//	__enable_irq();
 
 }
+
+
+void delay_Ms (uint32_t Ms){
+	SysTick->CTRL |=  SysTick_CTRL_ENABLE_Msk;
+
+	for(int i= Ms ; i>0 ; i-= 100){
+
+		while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)){}
+
+	}
+	SysTick->CTRL &=  ~SysTick_CTRL_ENABLE_Msk;
+}
+
