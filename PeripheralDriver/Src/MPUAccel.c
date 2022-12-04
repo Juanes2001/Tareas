@@ -15,6 +15,12 @@ int16_t AccelX      = 0;
 uint8_t AccelY_low  = 0;
 uint8_t AccelY_high = 0;
 int16_t AccelY      = 0;
+uint8_t GyroX_low   = 0;
+uint8_t GyroX_high  = 0;
+int16_t GyroX       = 0;
+uint8_t GyroY_low   = 0;
+uint8_t GyroY_high  = 0;
+int16_t GyroY       = 0;
 
 void readAccelValues(I2C_Handler_t *ptrHandlerI2C){
 
