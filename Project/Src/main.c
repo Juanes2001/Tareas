@@ -34,6 +34,8 @@ GPIO_Handler_t handlerPWMPinMotor = {0};
 GPIO_Handler_t handlerI2cSCL     = {0};
 GPIO_Handler_t handlerI2cSDA    = {0};
 GPIO_Handler_t handlerExInSWPin = {0};
+GPIO_Handler_t handlerPinRele1 = {0};
+GPIO_Handler_t handlerPinRele2 = {0};
 
 ADC_Config_t handlerADCJoy = {0};
 
@@ -164,6 +166,18 @@ int main (void){
 					updateDuttyCycle(&handlerPWMControlServo, duttyDown);
 					rxData = '\0';
 				}
+
+			}
+
+			else if (rxData == '1'){
+				writeChar(&handlerUSART2, rxData);
+				GPIO_WritePin(&handlerPinRele1, RESET);
+				GPIO_WritePin(&handlerPinRele2, RESET);
+
+			}else if (rxData == '2'){
+				writeChar(&handlerUSART2, rxData);
+				GPIO_WritePin(&handlerPinRele1, SET);
+				GPIO_WritePin(&handlerPinRele2, SET);
 
 			}
 
@@ -356,6 +370,26 @@ void initSystem(void){
 	handlerExtiConfig0.pGPIOHandler 		            = &handlerExInSWPin;
 	handlerExtiConfig0.edgeType 			            = EXTERNAL_INTERRUPT_RISING_EDGE;
 	extInt_Config(&handlerExtiConfig0);
+
+	handlerPinRele1.pGPIOx = GPIOB;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinNumber = PIN_1;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinRele1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinRele1);
+	GPIO_WritePin(&handlerPinRele1, SET);
+
+	handlerPinRele2.pGPIOx = GPIOB;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinNumber = PIN_2;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
+	handlerPinRele2.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
+	GPIO_Config(&handlerPinRele2);
+	GPIO_WritePin(&handlerPinRele2, SET);
 
 	config_SysTicksMs();
 
