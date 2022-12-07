@@ -45,7 +45,7 @@ typedef struct
 
 
 void PID_init(PID_Config_t *PID);
-double  Compute_PID( PID_Config_t *PID, double input);
+double Compute_PID( PID_Config_t *PID, double input);
 void PID_SetControllerDirection(PID_Config_t *PID, uint8_t Direction);
 uint8_t PID_GetDirection(PID_Config_t *PID);
 void PID_SetTunings(PID_Config_t *PID, double Kp, double Ki, double Kd);

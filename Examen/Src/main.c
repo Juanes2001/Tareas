@@ -285,14 +285,6 @@ void inSystem (void){
 	BasicTimer_Config(&handlerADCTim);
 
 
-	handlerADCTim.ptrTIMx = TIM4;
-	handlerADCTim.TIMx_Config.TIMx_interruptEnable = 1;
-	handlerADCTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerADCTim.TIMx_Config.TIMx_period = 100;
-	handlerADCTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
-
-
-
     handlerADCJoy.channelVector[0] = 0;
     handlerADCJoy.channelVector[1] = 1;
     handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;

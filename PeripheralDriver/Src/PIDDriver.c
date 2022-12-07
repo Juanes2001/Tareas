@@ -26,7 +26,7 @@ double  Compute_PID( PID_Config_t *PID, double input){
 	error = PID->Setpoint - input;
 	dInput  = (input - PID->LastInput);
 
-	PID->OutputSum     += (PID->Ki * error); //definición de la sumatoria para el valor integrativo
+	PID->OutputSum += (PID->Ki * error); //definición de la sumatoria para el valor integrativo
 
 	/* condicion de saturación (puntos extremos) */
 

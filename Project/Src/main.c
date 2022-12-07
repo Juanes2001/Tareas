@@ -17,6 +17,7 @@
 #include "RTCDriver.h"
 #include "FPUDriver.h"
 #include "PIDDriver.h"
+#include "MPUAccel.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -70,8 +71,9 @@ uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
 uint8_t flagEx = RESET;
 int16_t x = 0;
-int16_t y = 0;
 uint8_t adcFlag = RESET;
+int16_t accelX      = 0;
+int16_t accelY      = 0;
 
 char cmd[32];
 char userMsg[64];
@@ -79,8 +81,6 @@ unsigned int firstParameter;
 unsigned int secondParameter;
 unsigned int thirdParameter;
 unsigned int adcData;
-
-#define ADDRESS 0b1101001
 
 
 void initSystem(void);
@@ -214,14 +214,47 @@ int main (void){
 //
 //
 //		}
+		accelX = X_Accel(&handlerI2C1);
+		accelY = Y_Accel(&handlerI2C1);
+		sprintf(bufferData, "ACCELx = %u ACCELy = %u \n\r", accelX, accelY);
+		writeMsg(&handlerUSART2, bufferData);
+
 
 		if (rxData == 'a'){
+			writeChar(&handlerUSART2, rxData);
 			startTimer(&handlerTimADCConver);
+			rxData = '\0';
 		}
 
 		if (adcFlag){
-			sprintf(bufferData, "y = %u", adcData);
-			y = adcData;
+			sprintf(bufferData, "y = %u \n\r", adcData);
+			writeMsg(&handlerUSART2, bufferData);
+			x = adcData - 2050;
+
+			if ((x < 50) & (x > -50)){
+				if (handlerPWMControlMotor.config.duttyCicle == 55){
+					__NOP();
+				}else{
+					updateDuttyCycle(&handlerPWMControlMotor, 55);
+				}
+
+			}else if (x >= 50){
+				stopPwmSignal(&handlerPWMControlMotor);
+				updateDuttyCycle(&handlerPWMControlMotor, 48);
+				GPIO_WritePin(&handlerPinRele1, SET);
+				GPIO_WritePin(&handlerPinRele2, SET);
+				delay_Ms(1000);
+				startPwmSignal(&handlerPWMControlMotor);
+			}else if (x <= -50){
+				stopPwmSignal(&handlerPWMControlMotor);
+				updateDuttyCycle(&handlerPWMControlMotor, 48);
+				GPIO_WritePin(&handlerPinRele1, RESET);
+				GPIO_WritePin(&handlerPinRele2, RESET);
+				delay_Ms(1000);
+				startPwmSignal(&handlerPWMControlMotor);
+			}
+
+			adcFlag = RESET;
 		}
 
 		if (rxData != '\0'){
@@ -274,7 +307,7 @@ void initSystem(void){
 	GPIO_Config(&handlerUSARTPinRx);
 
 	handlerUSART2.ptrUSARTx                      = USART2;
-	handlerUSART2.USART_Config.USART_baudrate    = USART_BAUDRATE_115200;
+	handlerUSART2.USART_Config.USART_baudrate    = USART_BAUDRATE_9600;
 	handlerUSART2.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
 	handlerUSART2.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
 	handlerUSART2.USART_Config.USART_mode        = USART_MODE_RXTX;
@@ -327,7 +360,7 @@ void initSystem(void){
 	handlerPWMControlServo.ptrTIMx           = TIM4;
 	handlerPWMControlServo.config.channel    = PWM_CHANNEL_1;
 	handlerPWMControlServo.config.duttyCicle = 98;
-	handlerPWMControlServo.config.periodo    = 2000;
+	handlerPWMControlServo.config.periodo    = 20000;
 	handlerPWMControlServo.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControlServo);
 
@@ -335,17 +368,9 @@ void initSystem(void){
 	handlerPWMControlMotor.ptrTIMx           = TIM4;
 	handlerPWMControlMotor.config.channel    = PWM_CHANNEL_2;
 	handlerPWMControlMotor.config.duttyCicle = 70;
-	handlerPWMControlMotor.config.periodo    = 2000;
+	handlerPWMControlMotor.config.periodo    = 20000;
 	handlerPWMControlMotor.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControlMotor);
-
-	//ADC Config
-
-	handlerADCJoy.channel = 0;
-	handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
-	handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
-	handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
-	adc_Config(&handlerADCJoy);
 
 	//I2C config
 
@@ -369,11 +394,11 @@ void initSystem(void){
 
 	handlerI2C1.ptrI2Cx = I2C1;
 	handlerI2C1.modeI2C = I2C_MODE_FM;
-	handlerI2C1.slaveAddress = ADDRESS;
+	handlerI2C1.slaveAddress = ADDRESS_DOWN;
 	i2c_config(&handlerI2C1);
 
 
-	handlerExInSWPin.pGPIOx 							= GPIOA;
+	handlerExInSWPin.pGPIOx 							= GPIOB;
 	handlerExInSWPin.GPIO_PinConfig.GPIO_PinNumber      = PIN_0;
 	handlerExInSWPin.GPIO_PinConfig.GPIO_PinAltFunMode  = AF0;
 	handlerExInSWPin.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_IN;
@@ -405,14 +430,31 @@ void initSystem(void){
 	GPIO_WritePin(&handlerPinRele2, RESET);
 
 
+//	handlerTimADCConver.ptrTIMx = TIM3;
+//	handlerTimADCConver.TIMx_Config.TIMx_interruptEnable = 1;
+//	handlerTimADCConver.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
+//	handlerTimADCConver.TIMx_Config.TIMx_period          = 100;
+//	handlerTimADCConver.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
+//	BasicTimer_Config(&handlerTimADCConver);
+
+
 	handlerTimADCConver.ptrTIMx = TIM3;
 	handlerTimADCConver.TIMx_Config.TIMx_interruptEnable = 1;
-	handlerTimADCConver.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
-	handlerTimADCConver.TIMx_Config.TIMx_period          = 1;
-	handlerTimADCConver.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
+	handlerTimADCConver.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+	handlerTimADCConver.TIMx_Config.TIMx_period = 100;
+	handlerTimADCConver.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 	BasicTimer_Config(&handlerTimADCConver);
 
+	//ADC Config
+
+	handlerADCJoy.channel = 0;
+	handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
+	handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
+	handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
+	adc_Config(&handlerADCJoy);
+
 	config_SysTicksMs();
+	startAccel(&handlerI2C1);
 
 }
 
