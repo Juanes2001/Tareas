@@ -45,6 +45,7 @@ GPIO_Handler_t handlerUSARTPinRx       = {0};
 
 //Timer para controlador de velocidades
 BasicTimer_Handler_t handlerBlinky = {0};
+BasicTimer_Handler_t handlerTimADCConver = {0};
 
 USART_Handler_t handlerUSART2    = {0};
 
@@ -68,12 +69,16 @@ char bufferReception[64] = {0};
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
 uint8_t flagEx = RESET;
+int16_t x = 0;
+int16_t y = 0;
+uint8_t adcFlag = RESET;
 
 char cmd[32];
 char userMsg[64];
 unsigned int firstParameter;
 unsigned int secondParameter;
 unsigned int thirdParameter;
+unsigned int adcData;
 
 #define ADDRESS 0b1101001
 
@@ -88,100 +93,100 @@ int main (void){
 
 	while(1){
 
-		if (rxData != '\0'){
-			if (rxData == 'm'){
-				writeChar(&handlerUSART2, rxData);
-				if (handlerPWMControlMotor.ptrTIMx->CR1 & TIM_CR1_CEN){
-					stopPwmSignal(&handlerPWMControlMotor);
-					rxData = '\0';
-				}else {
-					startPwmSignal(&handlerPWMControlMotor);
-					rxData = '\0';
-				}
-
-			}else if (rxData == 's'){
-				writeChar(&handlerUSART2, rxData);
-				if (handlerPWMControlServo.ptrTIMx->CR1 & TIM_CR1_CEN){
-					stopPwmSignal(&handlerPWMControlServo);
-					rxData = '\0';
-				}else {
-					startPwmSignal(&handlerPWMControlServo);
-					rxData = '\0';
-				}
-			}
-
-
-
-			else if (rxData == 'd'){
-				duttyUp = handlerPWMControlMotor.config.duttyCicle;
-				duttyUp++;
-				sprintf(bufferData, "%u \n\r", duttyUp);
-				writeMsg(&handlerUSART2, bufferData);
-				if (duttyUp >= 100){
-					updateDuttyCycle(&handlerPWMControlMotor, 100);
-					rxData = '\0';
-				}else{
-					updateDuttyCycle(&handlerPWMControlMotor, duttyUp);
-					rxData = '\0';
-				}
-
-			}else if (rxData == 'u'){
-				duttyDown = handlerPWMControlMotor.config.duttyCicle;
-				duttyDown--;
-				sprintf(bufferData, "%u \n\r", duttyUp);
-				writeMsg(&handlerUSART2, bufferData);
-				if (duttyDown == 0){
-					updateDuttyCycle(&handlerPWMControlMotor, 1);
-					rxData = '\0';
-				}else{
-					updateDuttyCycle(&handlerPWMControlMotor, duttyDown);
-					rxData = '\0';
-				}
-
-			}
-
-			else if (rxData == 'a'){
-				writeChar(&handlerUSART2, rxData);
-				impulse();
-			}
-
-			else if (rxData == '-'){
-				duttyUp = handlerPWMControlServo.config.duttyCicle;
-				duttyUp++;
-				if (duttyUp >= 100){
-					updateDuttyCycle(&handlerPWMControlServo, 100);
-					rxData = '\0';
-				}else{
-					updateDuttyCycle(&handlerPWMControlServo, duttyUp);
-					rxData = '\0';
-				}
-
-			}else if (rxData == '+'){
-				duttyDown = handlerPWMControlServo.config.duttyCicle;
-				duttyDown--;
-				if (duttyDown == 0){
-					updateDuttyCycle(&handlerPWMControlServo, 1);
-					rxData = '\0';
-				}else{
-					updateDuttyCycle(&handlerPWMControlServo, duttyDown);
-					rxData = '\0';
-				}
-
-			}
-
-			else if (rxData == '1'){
-				writeChar(&handlerUSART2, rxData);
-				GPIO_WritePin(&handlerPinRele1, RESET);
-				GPIO_WritePin(&handlerPinRele2, RESET);
-
-			}else if (rxData == '2'){
-				writeChar(&handlerUSART2, rxData);
-				GPIO_WritePin(&handlerPinRele1, SET);
-				GPIO_WritePin(&handlerPinRele2, SET);
-
-			}
-
-
+//		if (rxData != '\0'){
+//			if (rxData == 'm'){
+//				writeChar(&handlerUSART2, rxData);
+//				if (handlerPWMControlMotor.ptrTIMx->CR1 & TIM_CR1_CEN){
+//					stopPwmSignal(&handlerPWMControlMotor);
+//					rxData = '\0';
+//				}else {
+//					startPwmSignal(&handlerPWMControlMotor);
+//					rxData = '\0';
+//				}
+//
+//			}else if (rxData == 's'){
+//				writeChar(&handlerUSART2, rxData);
+//				if (handlerPWMControlServo.ptrTIMx->CR1 & TIM_CR1_CEN){
+//					stopPwmSignal(&handlerPWMControlServo);
+//					rxData = '\0';
+//				}else {
+//					startPwmSignal(&handlerPWMControlServo);
+//					rxData = '\0';
+//				}
+//			}
+//
+//
+//
+//			else if (rxData == 'd'){
+//				duttyUp = handlerPWMControlMotor.config.duttyCicle;
+//				duttyUp++;
+//				sprintf(bufferData, "%u \n\r", duttyUp);
+//				writeMsg(&handlerUSART2, bufferData);
+//				if (duttyUp >= 100){
+//					updateDuttyCycle(&handlerPWMControlMotor, 100);
+//					rxData = '\0';
+//				}else{
+//					updateDuttyCycle(&handlerPWMControlMotor, duttyUp);
+//					rxData = '\0';
+//				}
+//
+//			}else if (rxData == 'u'){
+//				duttyDown = handlerPWMControlMotor.config.duttyCicle;
+//				duttyDown--;
+//				sprintf(bufferData, "%u \n\r", duttyUp);
+//				writeMsg(&handlerUSART2, bufferData);
+//				if (duttyDown == 0){
+//					updateDuttyCycle(&handlerPWMControlMotor, 1);
+//					rxData = '\0';
+//				}else{
+//					updateDuttyCycle(&handlerPWMControlMotor, duttyDown);
+//					rxData = '\0';
+//				}
+//
+//			}
+//
+//			else if (rxData == 'a'){
+//				writeChar(&handlerUSART2, rxData);
+//				impulse();
+//			}
+//
+//			else if (rxData == '-'){
+//				duttyUp = handlerPWMControlServo.config.duttyCicle;
+//				duttyUp++;
+//				if (duttyUp >= 100){
+//					updateDuttyCycle(&handlerPWMControlServo, 100);
+//					rxData = '\0';
+//				}else{
+//					updateDuttyCycle(&handlerPWMControlServo, duttyUp);
+//					rxData = '\0';
+//				}
+//
+//			}else if (rxData == '+'){
+//				duttyDown = handlerPWMControlServo.config.duttyCicle;
+//				duttyDown--;
+//				if (duttyDown == 0){
+//					updateDuttyCycle(&handlerPWMControlServo, 1);
+//					rxData = '\0';
+//				}else{
+//					updateDuttyCycle(&handlerPWMControlServo, duttyDown);
+//					rxData = '\0';
+//				}
+//
+//			}
+//
+//			else if (rxData == '1'){
+//				writeChar(&handlerUSART2, rxData);
+//				GPIO_WritePin(&handlerPinRele1, RESET);
+//				GPIO_WritePin(&handlerPinRele2, RESET);
+//
+//			}else if (rxData == '2'){
+//				writeChar(&handlerUSART2, rxData);
+//				GPIO_WritePin(&handlerPinRele1, SET);
+//				GPIO_WritePin(&handlerPinRele2, SET);
+//
+//			}
+//
+//
 //			else if (rxData == '-'){
 //				freqDown = (handlerPWMControlMotor.config.periodo);
 //				freqDown++;
@@ -206,8 +211,17 @@ int main (void){
 //				}
 //
 //			}
+//
+//
+//		}
 
+		if (rxData == 'a'){
+			startTimer(&handlerTimADCConver);
+		}
 
+		if (adcFlag){
+			sprintf(bufferData, "y = %u", adcData);
+			y = adcData;
 		}
 
 		if (rxData != '\0'){
@@ -292,11 +306,11 @@ void initSystem(void){
 	startTimer(&handlerBlinky);
 
 	//PWM con sus respectivos pines del servomotor y del motor
-	handlerPWMPinServo.pGPIOx = GPIOA;
+	handlerPWMPinServo.pGPIOx = GPIOB;
 	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinAltFunMode = AF2;
 	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
 	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinOPType = GPIO_OTYPE_PUSHPULL;
-	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinNumber = PIN_7;
+	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinNumber = PIN_6;
 	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPWMPinServo.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPWMPinServo);
@@ -310,29 +324,28 @@ void initSystem(void){
 	handlerPWMPinMotor.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPWMPinMotor);
 
-	handlerPWMControlServo.ptrTIMx           = TIM3;
-	handlerPWMControlServo.config.channel    = PWM_CHANNEL_2;
+	handlerPWMControlServo.ptrTIMx           = TIM4;
+	handlerPWMControlServo.config.channel    = PWM_CHANNEL_1;
 	handlerPWMControlServo.config.duttyCicle = 98;
-	handlerPWMControlServo.config.periodo    = 50;
-	handlerPWMControlServo.config.prescaler  = PWM_SPEED_1ms;
+	handlerPWMControlServo.config.periodo    = 2000;
+	handlerPWMControlServo.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControlServo);
 
 
 	handlerPWMControlMotor.ptrTIMx           = TIM4;
 	handlerPWMControlMotor.config.channel    = PWM_CHANNEL_2;
 	handlerPWMControlMotor.config.duttyCicle = 70;
-	handlerPWMControlMotor.config.periodo    = 2500;
+	handlerPWMControlMotor.config.periodo    = 2000;
 	handlerPWMControlMotor.config.prescaler  = PWM_SPEED_1us;
 	pwm_Config(&handlerPWMControlMotor);
 
 	//ADC Config
 
-	handlerADCJoy.channelVector[0] = 0;
-	handlerADCJoy.channelVector[1] = 1;
+	handlerADCJoy.channel = 0;
 	handlerADCJoy.dataAlignment = ADC_ALIGNMENT_RIGHT;
 	handlerADCJoy.resolution = ADC_RESOLUTION_12_BIT;
 	handlerADCJoy.samplingPeriod = ADC_SAMPLING_PERIOD_28_CYCLES;
-	ADC_ConfigMultichannel(&handlerADCJoy, 2);
+	adc_Config(&handlerADCJoy);
 
 	//I2C config
 
@@ -379,7 +392,7 @@ void initSystem(void){
 	handlerPinRele1.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPinRele1.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRele1);
-	GPIO_WritePin(&handlerPinRele1, SET);
+	GPIO_WritePin(&handlerPinRele1, RESET);
 
 	handlerPinRele2.pGPIOx = GPIOB;
 	handlerPinRele2.GPIO_PinConfig.GPIO_PinAltFunMode = AF0;
@@ -389,12 +402,17 @@ void initSystem(void){
 	handlerPinRele2.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPinRele2.GPIO_PinConfig.GPIO_PinSpeed = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRele2);
-	GPIO_WritePin(&handlerPinRele2, SET);
+	GPIO_WritePin(&handlerPinRele2, RESET);
+
+
+	handlerTimADCConver.ptrTIMx = TIM3;
+	handlerTimADCConver.TIMx_Config.TIMx_interruptEnable = 1;
+	handlerTimADCConver.TIMx_Config.TIMx_mode            = BTIMER_MODE_UP;
+	handlerTimADCConver.TIMx_Config.TIMx_period          = 1;
+	handlerTimADCConver.TIMx_Config.TIMx_speed           = BTIMER_SPEED_100us;
+	BasicTimer_Config(&handlerTimADCConver);
 
 	config_SysTicksMs();
-
-
-
 
 }
 
@@ -412,6 +430,15 @@ void callback_extInt0(void){
 	flagEx = SET;
 }
 
+void adcComplete_Callback(void){
+	adcData = getADC();
+	adcFlag = SET;
+}
+
+void BasicTimer3_Callback(void){
+	startSingleADC();
+}
+
 void parseCommands(char *command){
 
 	sscanf(command, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
@@ -422,7 +449,7 @@ void parseCommands(char *command){
 		writeMsg(&handlerUSART2, "HELP MENU CMD :  \n");
 		writeMsg(&handlerUSART2, "1)  startMotor   \n");
 		writeMsg(&handlerUSART2, "2)  reverseMotor \n");
-		writeMsg(&handlerUSART2, "3)  stopMotor \n");
+		writeMsg(&handlerUSART2, "3)  stopMotor    \n");
  		writeMsg(&handlerUSART2, "4)   \n");
 		writeMsg(&handlerUSART2, "5)   \n");
 		writeMsg(&handlerUSART2, "6)   \n");
@@ -432,27 +459,21 @@ void parseCommands(char *command){
 		writeMsg(&handlerUSART2, "10)  \n");
 		writeMsg(&handlerUSART2, "11)  \n");
 
+	}else if (strcmp(cmd, "startMotor") == 0){
+		updateDuttyCycle(&handlerPWMControlMotor, 48);
+		startPwmSignal(&handlerPWMControlMotor);
 	}
-	else if (strcmp(cmd, "startMotor") == 0){
+	else if (strcmp(cmd, "reverseMotor") == 0){
+		stopPwmSignal(&handlerPWMControlMotor);
+		GPIOxTooglePin(&handlerPinRele1);
+		GPIOxTooglePin(&handlerPinRele2);
+		delay_Ms(1000);
 		startPwmSignal(&handlerPWMControlMotor);
 
 	}
-//	else if (com2  == 0){
-//		stopTimer(&handlerADCTim);
-//		stopPwmSignal(&handlerPwmR);
-//		stopPwmSignal(&handlerPwmG);
-//		stopPwmSignal(&handlerPwmB);
-//		setPWM = RESET;
-//	}
-//	else if (com3 == 0){
-//		if (setPWM){
-//			updateFrequency(&handlerPwmR, firstParameter);
-//			updateFrequency(&handlerPwmG, secondParameter);
-//			updateFrequency(&handlerPwmB, thirdParameter);
-//		}else{
-//			writeMsg(&handlerUSART1, "Turn on the LED first \n");
-//		}
-//	}
+	else if (strcmp(cmd, "stopMotor") == 0){
+		stopPwmSignal(&handlerPWMControlMotor);
+	}
 //	else if (com4 == 0){
 //			updateFrequency(&handlerPwmR, 10);
 //			updateFrequency(&handlerPwmG, 10);
@@ -514,13 +535,15 @@ void parseCommands(char *command){
 }
 
 void impulse (void){
-//	updateDuttyCycle(&handlerPWMControlMotor, 55);
-//	delay_Ms(2000);
-//	updateDuttyCycle(&handlerPWMControlMotor, 70);
-	updateDuttyCycle(&handlerPWMControlServo, 97);
-	delay_Ms(200);
-	updateDuttyCycle(&handlerPWMControlServo, 98);
+	updateDuttyCycle(&handlerPWMControlMotor, 55);
+	delay_Ms(2000);
+	updateDuttyCycle(&handlerPWMControlMotor, 70);
+//	updateDuttyCycle(&handlerPWMControlServo, 97);
+//	delay_Ms(200);
+//	updateDuttyCycle(&handlerPWMControlServo, 98);
 }
+
+
 
 
 
