@@ -201,3 +201,13 @@ void usart2Rx_Callback(void){
 	auxData = getRxData();
 }
 
+/*
+ * Hola Juan Esteban,
+ * En general es la misma solución que todos aparentemente decidieron hacer.
+ * No es ideal tener algo ahí recibiendo siempre sin necesidad, es mejor tener algo que se pueda iniciar y detener.
+ *
+ * Calificación = 4.5
+ *
+ * */
+
+
