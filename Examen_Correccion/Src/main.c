@@ -13,8 +13,8 @@
 #include "PwmDriver.h"
 #include "I2CDriver.h"
 #include "AdcDriver.h"
-#include "OLEDDriver.h"
-#include "RTCDriver.h"
+//#include "OLEDDriver.h"
+//#include "RTCDriver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -43,7 +43,7 @@ GPIO_Handler_t handlerI2cSDA = {0};
 GPIO_Handler_t handlerLEDPin = {0};
 
 //handler para USART1
-USART_Handler_t handlerUSART1 = {0};
+USART_Handler_t handlerUSART2 = {0};
 
 //handler para PWM
 
@@ -60,7 +60,7 @@ BasicTimer_Handler_t handlerDateTim = {0};
 I2C_Handler_t handlerI2C1 = {0};
 
 //handler para el tiempo actual
-RTC_Handler_t handlerRTC = {0};
+//RTC_Handler_t handlerRTC = {0};
 
 
 void inSystem (void);
@@ -81,8 +81,8 @@ unsigned int firstParameter;
 unsigned int secondParameter;
 unsigned int thirdParameter;
 
-char bufferReception[64];
-//char bufferMSG[64];
+char bufferReception[32];
+char bufferMSG[64];
 
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
@@ -144,8 +144,8 @@ int main(void){
 
 
 
-		x = adcData[0]-2000;
-		y = adcData[1]-2000;
+		x = adcData[0]-2200;
+		y = adcData[1]-2200;
 		vectorArcUp = (180*atan2(y,x))/M_PI;
 		vectorArcDown =180+(180*atan2(-y,-x))/M_PI;
 
@@ -160,30 +160,38 @@ int main(void){
 		duttyDownB = 100-(100*(vectorArcDown+120))/120;
 
 
-		if (setScrollUP){
-			counter++;
-			setLineAddress(&handlerI2C1, counter);
-			if (counter == 64){
-				counter = 0;
-			}
-			setScrollUP=RESET;
-		}else if (setScrollDOWN){
-			setLineAddress(&handlerI2C1, 64-counter);
-			counter++;
-			if (counter == 63){
-				counter = 0;
-			}
-			setScrollUP=RESET;
+//		if (setScrollUP){
+//			counter++;
+//			setLineAddress(&handlerI2C1, counter);
+//			if (counter == 64){
+//				counter = 0;
+//			}
+//			setScrollUP=RESET;
+//		}else if (setScrollDOWN){
+//			setLineAddress(&handlerI2C1, 64-counter);
+//			counter++;
+//			if (counter == 63){
+//				counter = 0;
+//			}
+//			setScrollUP=RESET;
+//
+//		}
 
-		}
+//		if (rxData == 'a'){
+//			startTimer(&handlerADCTim);
+//			startPwmSignal(&handlerPwmR);
+//			startPwmSignal(&handlerPwmG);
+//			startPwmSignal(&handlerPwmB);
+//
+//		}
 
 
 		if (adcFlag){
 //			sprintf(bufferMSG,"vx = %u, vy = %u \n \r",adcData[0],adcData[1]);
-//			writeMsg(&handlerUSART1, bufferMSG);
+//			writeMsg(&handlerUSART2, bufferMSG);
 
 
-			if (((x>-100) & (x<100)) & ((y>-100) & (y<100)) ){
+			if (((x>-200) & (x<200)) & ((y>-200) & (y<200)) ){
 				updateDuttyCycle(&handlerPwmR, 100);
 				updateDuttyCycle(&handlerPwmG, 100);
 				updateDuttyCycle(&handlerPwmB, 100);
@@ -215,25 +223,29 @@ int main(void){
 		//COMANDOS
 
 
+
 		if (rxData != '\0'){
 			bufferReception[counterReception] = rxData;
 			counterReception++;
+			writeChar(&handlerUSART2, rxData);
 
 			if (rxData == '@'){
 				doneTransaction = SET;
+				writeMsg(&handlerUSART2, "\n\r");
 
 				bufferReception[counterReception] = '\0';
 
 				counterReception = 0;
 
 			}
-
 			rxData = '\0';
-
 		}
 
 		if (doneTransaction){
 			parseCommands(bufferReception);
+			for (uint8_t i = 0 ; i<32 ;i++){
+				bufferReception[i] = 0;
+			}
 			doneTransaction = RESET;
 		}
 
@@ -301,7 +313,7 @@ void inSystem (void){
     handlerPinTx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
     handlerPinTx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
     handlerPinTx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-    handlerPinTx.GPIO_PinConfig.GPIO_PinNumber      = PIN_9;
+    handlerPinTx.GPIO_PinConfig.GPIO_PinNumber      = PIN_2;
     handlerPinTx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
     handlerPinTx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinTx);
@@ -311,21 +323,20 @@ void inSystem (void){
 	handlerPinRx.GPIO_PinConfig.GPIO_PinAltFunMode  = AF7;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinOPType      = GPIO_OTYPE_PUSHPULL;
-	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber      = PIN_10;
+	handlerPinRx.GPIO_PinConfig.GPIO_PinNumber      = PIN_3;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PUPDR_NOTHING;
 	handlerPinRx.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerPinRx);
 
-	handlerUSART1.ptrUSARTx                      = USART1;
-	handlerUSART1.USART_Config.USART_baudrate    = USART_BAUDRATE_9600;//37,7222 de Mantiza
-	handlerUSART1.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
-	handlerUSART1.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
-	handlerUSART1.USART_Config.USART_mode        = USART_MODE_RXTX;
-	handlerUSART1.USART_Config.USART_parity      = USART_PARITY_EVEN;
-	handlerUSART1.USART_Config.USART_stopbits    = USART_STOPBIT_1;
-	handlerUSART1.USART_Config.USART_datasize    = USART_DATASIZE_9BIT;
-	handlerUSART1.USART_Config.USART_parityError = 0;
-	USART_Config(&handlerUSART1);
+	handlerUSART2.ptrUSARTx                      = USART2;
+	handlerUSART2.USART_Config.USART_baudrate    = USART_BAUDRATE_115200;//37,7222 de Mantiza
+	handlerUSART2.USART_Config.USART_enableInRx  = USART_INTERRUPT_RX_ENABLE;
+	handlerUSART2.USART_Config.USART_enableInTx  = USART_INTERRUPT_TX_DISABLE;
+	handlerUSART2.USART_Config.USART_mode        = USART_MODE_RXTX;
+	handlerUSART2.USART_Config.USART_parity      = USART_PARITY_NONE;
+	handlerUSART2.USART_Config.USART_stopbits    = USART_STOPBIT_1;
+	handlerUSART2.USART_Config.USART_datasize    = USART_DATASIZE_8BIT;
+	USART_Config(&handlerUSART2);
 
 
 	//Configuracion de pines y timers para PWM
@@ -479,7 +490,7 @@ void adcComplete_Callback(void){
 
 //Calback para recepciones por coolterm
 
-void usart1Rx_Callback(void){
+void usart2Rx_Callback(void){
 	rxData = getRxData();
 }
 
@@ -510,18 +521,18 @@ void parseCommands(char *stringVector){
 
 
 	if (strcmp(cmd, "help") == 0){
-		writeMsg(&handlerUSART1, "HELP MENU CMD : \n");
-		writeMsg(&handlerUSART1, "1)  startLED \n");
-		writeMsg(&handlerUSART1, "2)  stopLED \n");
-		writeMsg(&handlerUSART1, "3)  setLED_period #RnewPeriod #GnewPeriod #BnewPeriod \n");
- 		writeMsg(&handlerUSART1, "4)  resetLED_period \n");
-		writeMsg(&handlerUSART1, "5)  start_display \n");
-		writeMsg(&handlerUSART1, "6)  stop_display \n");
-		writeMsg(&handlerUSART1, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
-		writeMsg(&handlerUSART1, "8)  print_date \n");
-		writeMsg(&handlerUSART1, "9)  set_cronometer #hours #minutes #seconds \n");
-		writeMsg(&handlerUSART1, "10) scroll #1=UP or 0=DOWN \n");
-		writeMsg(&handlerUSART1, "11) clear_dysplay \n");
+		writeMsg(&handlerUSART2, "HELP MENU CMD : \n");
+		writeMsg(&handlerUSART2, "1)  startLED \n");
+		writeMsg(&handlerUSART2, "2)  stopLED \n");
+		writeMsg(&handlerUSART2, "3)  setLED_period #RnewPeriod #GnewPeriod #BnewPeriod \n");
+ 		writeMsg(&handlerUSART2, "4)  resetLED_period \n");
+		writeMsg(&handlerUSART2, "5)  start_display \n");
+		writeMsg(&handlerUSART2, "6)  stop_display \n");
+		writeMsg(&handlerUSART2, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
+		writeMsg(&handlerUSART2, "8)  print_date \n");
+		writeMsg(&handlerUSART2, "9)  set_cronometer #hours #minutes #seconds \n");
+		writeMsg(&handlerUSART2, "10) scroll #1=UP or 0=DOWN \n");
+		writeMsg(&handlerUSART2, "11) clear_dysplay \n");
 
 	}
 	else if (com1 == 0){
@@ -529,7 +540,6 @@ void parseCommands(char *stringVector){
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
 		startPwmSignal(&handlerPwmB);
-		setPWM = SET;
 
 
 	}
@@ -546,7 +556,7 @@ void parseCommands(char *stringVector){
 			updateFrequency(&handlerPwmG, secondParameter);
 			updateFrequency(&handlerPwmB, thirdParameter);
 		}else{
-			writeMsg(&handlerUSART1, "Turn on the LED first \n");
+			writeMsg(&handlerUSART2, "Turn on the LED first \n");
 		}
 	}
 	else if (com4 == 0){
@@ -555,53 +565,54 @@ void parseCommands(char *stringVector){
 			updateFrequency(&handlerPwmB, 10);
 
 	}
-	else if (com5 == 0){
-		startOLED(&handlerI2C1);
-		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
-
-	}
-	else if (com6 == 0){
-		stopOLED(&handlerI2C1);
-
-	}
-	else if (com7 == 0){
-		uint8_t i =0;
-		uint8_t flag = RESET;
-		while (*(userMsg+i)!='\0'){
-			if ((*(userMsg+i) <= 122) & (*(userMsg+i) >= 97)){
-				flag = SET;
-				break;
-			}else{
-				__NOP();
-			}
-		}
-
-		if (flag){
-			writeMsg(&handlerUSART1, "REWRITE MESSAGE IN CAPITAL LETTER \n");
-		}else{
-			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
-			flag = RESET;
-		}
-
-
-
-	}
-	else if (com8 == 0){
-//		handlerRTC.RTC_config.rtcDay = 8;
-//		handlerRTC.RTC_config.rtcHours = firstParameter;
-//		handlerRTC.RTC_config.rtcMinutes = secondParameter;
-//		handlerRTC.RTC_config.rtcMonth = 11;
-//		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
-//		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
-//		handlerRTC.RTC_config.rtcYear= 22;
-//		Rtc_Congif(&handlerRTC);
+//	else if (com5 == 0){
+//		startOLED(&handlerI2C1);
+//		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
 //
-//		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
-
-		drawMSG(&handlerI2C1, date, sizeof(date));
-
-
-	}
+//	}
+//	else if (com6 == 0){
+//		stopOLED(&handlerI2C1);
+//
+//	}
+//	else if (com7 == 0){
+//		uint8_t i =0;
+//		uint8_t flag = RESET;
+//		while (*(userMsg+i)!='\0'){
+//			if ((*(userMsg+i) <= 122) & (*(userMsg+i) >= 97)){
+//				flag = SET;
+//				break;
+//			}else{
+//				__NOP();
+//			}
+//		}
+//
+//		if (flag){
+//			writeMsg(&handlerUSART2, "REWRITE MESSAGE IN CAPITAL LETTER \n");
+//		}
+//		else{
+//			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
+//			flag = RESET;
+//		}
+//
+//
+//
+//	}
+//	else if (com8 == 0){
+////		handlerRTC.RTC_config.rtcDay = 8;
+////		handlerRTC.RTC_config.rtcHours = firstParameter;
+////		handlerRTC.RTC_config.rtcMinutes = secondParameter;
+////		handlerRTC.RTC_config.rtcMonth = 11;
+////		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
+////		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+////		handlerRTC.RTC_config.rtcYear= 22;
+////		Rtc_Congif(&handlerRTC);
+////
+////		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
+//
+//		drawMSG(&handlerI2C1, date, sizeof(date));
+//
+//
+//	}
 	else if (com9 == 0){
 //		handlerRTC.RTC_config.rtcDay = 8;
 //		handlerRTC.RTC_config.rtcHours = 0;
@@ -627,14 +638,14 @@ void parseCommands(char *stringVector){
 
 
 	}
-	else if (com11 == 0){
-		clearDisplay(&handlerI2C1);
-		setScrollOUT = SET;
-
-
-	}
+//	else if (com11 == 0){
+//		clearDisplay(&handlerI2C1);
+//		setScrollOUT = SET;
+//
+//
+//	}
 	else{
-		writeMsg(&handlerUSART1, "WRONG CMD, WRITE IT AGAING \n");
+		writeMsg(&handlerUSART2, "WRONG CMD, WRITE IT AGAING \n");
 	}
 
 }
