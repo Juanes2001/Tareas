@@ -12,12 +12,12 @@
 #include <stdint.h>
 #include "I2CDriver.h"
 #include "OLEDDriver.h"
+#include "SysTickDriver.h"
 
 char letterArray[5] = {0};
 //OLED Driver
 
 void sendDataBytes(I2C_Handler_t *ptrHandlerI2C, char *dataBytes, uint8_t sizeArray){
-
 
 	i2c_startTransaction(ptrHandlerI2C);
 
@@ -60,11 +60,55 @@ void sendCommandByte ( I2C_Handler_t *ptrHandlerI2C,  char command){
 //Funciones especiales
 
 void startOLED (I2C_Handler_t *ptrHandlerI2Ctr){
+	//Apagamos la pantalla OLED
+	sendCommandByte(ptrHandlerI2Ctr, 0b10101110);
+	// Seteamos la divicion de frecuencia del oscilador interno y la frecuencia propia de oscilacion
+	sendCommandByte(ptrHandlerI2Ctr, 0b01010000);
+	// Seteamos el Multiplex Ratio
+	sendCommandByte(ptrHandlerI2Ctr, 0b10101000);
+	sendCommandByte(ptrHandlerI2Ctr, 0b00111111);
+	//Seteamos que el Dysplay Offset comienze en 00H
+	sendCommandByte(ptrHandlerI2Ctr, 0b11010011);
+	sendCommandByte(ptrHandlerI2Ctr, 0b00000000);
+	// Comenzamos a imprimir valores desde la fila 0
+	sendCommandByte(ptrHandlerI2Ctr, 0b01000000);
+	//Seteamos la fuente de poder
+	sendCommandByte(ptrHandlerI2Ctr, 0b10101101);
+	sendCommandByte(ptrHandlerI2Ctr, 0b10001011);
+	//Seteamos el segment Re-map
+	sendCommandByte(ptrHandlerI2Ctr, 0b10100001);
+	//Seteamos la direccion de escaneo de las filas
+	sendCommandByte(ptrHandlerI2Ctr, 0b11001000);
+	//Configuramos los pines del hardware
+	sendCommandByte(ptrHandlerI2Ctr, 0b11011010);
+	sendCommandByte(ptrHandlerI2Ctr, 0b00010010);
+	//Configuracion del contraste
+	sendCommandByte(ptrHandlerI2Ctr, 0b10000001);
+	sendCommandByte(ptrHandlerI2Ctr, 0xFF);
+	//Seteo de el periodo de pre-carga
+	sendCommandByte(ptrHandlerI2Ctr, 0b11011001);
+	sendCommandByte(ptrHandlerI2Ctr, 0x1F);
+	//VCOMH Deselect Level
+	sendCommandByte(ptrHandlerI2Ctr, 0xDB);
+	sendCommandByte(ptrHandlerI2Ctr, 0x40);
+	//SET Vpp
+	sendCommandByte(ptrHandlerI2Ctr, 0x33);
+	//Set normal/inverse Display
+	sendCommandByte(ptrHandlerI2Ctr, 0xA6);
+	//Configuracion para limpiar pantalla
+	clearDisplay(ptrHandlerI2Ctr);
 	sendCommandByte(ptrHandlerI2Ctr, 0b10101111);
+	delay_Ms(200);
+
+
 }
 
 void stopOLED (I2C_Handler_t *ptrHandlerI2Ctr){
 	sendCommandByte(ptrHandlerI2Ctr, 0b10101110);
+	//Set Charge Pump
+	sendCommandByte(ptrHandlerI2Ctr, 0x8D);
+	sendCommandByte(ptrHandlerI2Ctr, 0x10);
+	delay_Ms(200);
 }
 
 void clearDisplay (I2C_Handler_t *ptrHandlerI2Ctr){
@@ -112,7 +156,7 @@ char *letterTochar (uint8_t character){
 			break;
 
 		}case 'B':{
-			letterArray[0] = 0b01111100;
+			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01001010;
 			letterArray[2] = 0b01001010;
 			letterArray[3] = 0b01001010;
@@ -455,6 +499,8 @@ char *letterTochar (uint8_t character){
 
 
 void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg , uint8_t sizeMsg){
+
+	clearDisplay(ptrHandlerI2Ctr);
 	uint8_t i = 0;
 //	uint8_t renglones = 0;
 	char mensaje[sizeMsg][8];

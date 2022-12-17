@@ -13,7 +13,8 @@
 #include "PwmDriver.h"
 #include "I2CDriver.h"
 #include "AdcDriver.h"
-//#include "OLEDDriver.h"
+#include "OLEDDriver.h"
+#include "SysTickDriver.h"
 //#include "RTCDriver.h"
 
 #include <stdint.h>
@@ -104,18 +105,6 @@ uint16_t vectorArcDown = 0;
 int16_t x = 0;
 int16_t y = 0;
 
-uint8_t com1 = 0;
-uint8_t com2 = 0;
-uint8_t com3 = 0;
-uint8_t com4 = 0;
-uint8_t com5 = 0;
-uint8_t com6 = 0;
-uint8_t com7 = 0;
-uint8_t com8 = 0;
-uint8_t com9 = 0;
-uint8_t com10 = 0;
-uint8_t com11 = 0;
-
 uint8_t flagDate = RESET;
 
 char date[16];
@@ -125,9 +114,10 @@ uint8_t  min = 0;
 uint8_t  hours = 0;
 
 uint8_t setScrollIN = RESET;
-uint8_t setScrollOUT = RESET;
+uint8_t setScrollOUT = SET;
 uint8_t setScrollUP = RESET;
 uint8_t setScrollDOWN = RESET;
+uint8_t row = 0;
 
 
 //ADDRESS OLED
@@ -137,7 +127,7 @@ uint8_t setScrollDOWN = RESET;
 //Este es el corazon del programa donde se ejecuta todo
 int main(void){
 
-	inSystem();
+    inSystem();
 
 
 	while(1){
@@ -160,30 +150,22 @@ int main(void){
 		duttyDownB = 100-(100*(vectorArcDown+120))/120;
 
 
-//		if (setScrollUP){
-//			counter++;
-//			setLineAddress(&handlerI2C1, counter);
-//			if (counter == 64){
-//				counter = 0;
-//			}
-//			setScrollUP=RESET;
-//		}else if (setScrollDOWN){
-//			setLineAddress(&handlerI2C1, 64-counter);
-//			counter++;
-//			if (counter == 63){
-//				counter = 0;
-//			}
-//			setScrollUP=RESET;
-//
-//		}
+		if (setScrollUP){
+			counter++;
+			setLineAddress(&handlerI2C1, counter);
+			if (counter == 64){
+				counter = 0;
+			}
+			setScrollUP=RESET;
+		}else if (setScrollDOWN){
+			setLineAddress(&handlerI2C1, counter);
+			counter--;
+			if (counter == 255){
+				counter = 64;
+			}
+			setScrollDOWN=RESET;
 
-//		if (rxData == 'a'){
-//			startTimer(&handlerADCTim);
-//			startPwmSignal(&handlerPwmR);
-//			startPwmSignal(&handlerPwmG);
-//			startPwmSignal(&handlerPwmB);
-//
-//		}
+		}
 
 
 		if (adcFlag){
@@ -443,6 +425,7 @@ void inSystem (void){
 	BasicTimer_Config(&handlerDateTim);
 
 	startTimer(&handlerDateTim);
+	config_SysTicksMs();
 
 
 
@@ -506,51 +489,42 @@ void BasicTimer4_Callback(void){
 void parseCommands(char *stringVector){
 
 	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
-	com1 = strcmp(cmd, "startLED") ;
-	com2 = strcmp(cmd, "stopLED");
-	com3 = strcmp(cmd, "setLED_period");
-	com4 = strcmp(cmd, "resetLED_period");
-	com5 = strcmp(cmd, "start_display");
-	com6 = strcmp(cmd, "stop_display");
-	com7 = strcmp(cmd, "print_msg");
-	com8 = strcmp(cmd, "print_date");
-	com9 = strcmp(cmd, "set_cronometer");
-	com10 = strcmp(cmd, "scroll");
-	com11 = strcmp(cmd, "clear_dysplay");
 
 
 
 	if (strcmp(cmd, "help") == 0){
 		writeMsg(&handlerUSART2, "HELP MENU CMD : \n");
-		writeMsg(&handlerUSART2, "1)  startLED \n");
-		writeMsg(&handlerUSART2, "2)  stopLED \n");
-		writeMsg(&handlerUSART2, "3)  setLED_period #RnewPeriod #GnewPeriod #BnewPeriod \n");
- 		writeMsg(&handlerUSART2, "4)  resetLED_period \n");
-		writeMsg(&handlerUSART2, "5)  start_display \n");
-		writeMsg(&handlerUSART2, "6)  stop_display \n");
+		writeMsg(&handlerUSART2, "1)  startLED \n"); //
+		writeMsg(&handlerUSART2, "2)  stopLED \n"); //
+		writeMsg(&handlerUSART2, "3)  setLED_period #RnewPeriod #GnewPeriod #BnewPeriod \n"); //
+ 		writeMsg(&handlerUSART2, "4)  resetLED_period \n"); //
+		writeMsg(&handlerUSART2, "5)  start_display \n");   //
+		writeMsg(&handlerUSART2, "6)  stop_display \n");    //
 		writeMsg(&handlerUSART2, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
 		writeMsg(&handlerUSART2, "8)  print_date \n");
 		writeMsg(&handlerUSART2, "9)  set_cronometer #hours #minutes #seconds \n");
-		writeMsg(&handlerUSART2, "10) scroll #1=UP or 0=DOWN \n");
-		writeMsg(&handlerUSART2, "11) clear_dysplay \n");
+		writeMsg(&handlerUSART2, "10) scroll #1=UP or #0=DOWN \n"); //
+		writeMsg(&handlerUSART2, "11) stop_scroll \n");  //
+		writeMsg(&handlerUSART2, "12) clear_display \n"); //
 
 	}
-	else if (com1 == 0){
+	else if (strcmp(cmd, "startLED") == 0){
 		startTimer(&handlerADCTim);
 		startPwmSignal(&handlerPwmR);
 		startPwmSignal(&handlerPwmG);
 		startPwmSignal(&handlerPwmB);
+		setPWM = SET;
 
 
 	}
-	else if (com2  == 0){
+	else if (strcmp(cmd, "stopLED")  == 0){
 		stopTimer(&handlerADCTim);
 		stopPwmSignal(&handlerPwmR);
 		stopPwmSignal(&handlerPwmG);
 		stopPwmSignal(&handlerPwmB);
 		setPWM = RESET;
 	}
-	else if (com3 == 0){
+	else if (strcmp(cmd, "setLED_period") == 0){
 		if (setPWM){
 			updateFrequency(&handlerPwmR, firstParameter);
 			updateFrequency(&handlerPwmG, secondParameter);
@@ -559,61 +533,63 @@ void parseCommands(char *stringVector){
 			writeMsg(&handlerUSART2, "Turn on the LED first \n");
 		}
 	}
-	else if (com4 == 0){
+	else if (strcmp(cmd, "resetLED_period") == 0){
 			updateFrequency(&handlerPwmR, 10);
 			updateFrequency(&handlerPwmG, 10);
 			updateFrequency(&handlerPwmB, 10);
 
 	}
-//	else if (com5 == 0){
-//		startOLED(&handlerI2C1);
-//		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
+	else if (strcmp(cmd, "start_display") == 0){
+		startOLED(&handlerI2C1);
+		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
+//		for (uint8_t i = 0 ,i < 64 , i++){
 //
-//	}
-//	else if (com6 == 0){
-//		stopOLED(&handlerI2C1);
-//
-//	}
-//	else if (com7 == 0){
-//		uint8_t i =0;
-//		uint8_t flag = RESET;
-//		while (*(userMsg+i)!='\0'){
-//			if ((*(userMsg+i) <= 122) & (*(userMsg+i) >= 97)){
-//				flag = SET;
-//				break;
-//			}else{
-//				__NOP();
-//			}
 //		}
+
+	}
+	else if (strcmp(cmd, "stop_display") == 0){
+		stopOLED(&handlerI2C1);
+
+	}
+	else if (strcmp(cmd, "print_msg") == 0){
+		uint8_t i = 0;
+		uint8_t flag = RESET;
+		while (*(userMsg+i)!='\0'){
+			if ((*(userMsg+i) <= 122) & (*(userMsg+i) >= 97)){
+				flag = SET;
+				break;
+			}else{
+				__NOP();
+			}
+		}
+
+		if (flag){
+			writeMsg(&handlerUSART2, "REWRITE MESSAGE IN CAPITAL LETTER \n");
+		}
+		else{
+			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
+		}
+
+
+
+	}
+	else if (strcmp(cmd, "print_date") == 0){
+//		handlerRTC.RTC_config.rtcDay = 8;
+//		handlerRTC.RTC_config.rtcHours = firstParameter;
+//		handlerRTC.RTC_config.rtcMinutes = secondParameter;
+//		handlerRTC.RTC_config.rtcMonth = 11;
+//		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
+//		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+//		handlerRTC.RTC_config.rtcYear= 22;
+//		Rtc_Congif(&handlerRTC);
 //
-//		if (flag){
-//			writeMsg(&handlerUSART2, "REWRITE MESSAGE IN CAPITAL LETTER \n");
-//		}
-//		else{
-//			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
-//			flag = RESET;
-//		}
-//
-//
-//
-//	}
-//	else if (com8 == 0){
-////		handlerRTC.RTC_config.rtcDay = 8;
-////		handlerRTC.RTC_config.rtcHours = firstParameter;
-////		handlerRTC.RTC_config.rtcMinutes = secondParameter;
-////		handlerRTC.RTC_config.rtcMonth = 11;
-////		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
-////		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
-////		handlerRTC.RTC_config.rtcYear= 22;
-////		Rtc_Congif(&handlerRTC);
-////
-////		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
-//
-//		drawMSG(&handlerI2C1, date, sizeof(date));
-//
-//
-//	}
-	else if (com9 == 0){
+//		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
+
+		drawMSG(&handlerI2C1, date, sizeof(date));
+
+
+	}
+	else if (strcmp(cmd, "set_cronometer") == 0){
 //		handlerRTC.RTC_config.rtcDay = 8;
 //		handlerRTC.RTC_config.rtcHours = 0;
 //		handlerRTC.RTC_config.rtcMinutes = 0;
@@ -627,7 +603,7 @@ void parseCommands(char *stringVector){
 
 
 	}
-	else if (com10 == 0){
+	else if (strcmp(cmd, "scroll") == 0){
 		setScrollOUT = RESET;
 		if (firstParameter == SET){
 			setScrollIN =SET;
@@ -637,13 +613,17 @@ void parseCommands(char *stringVector){
 		}
 
 
+
+	}else if(strcmp(cmd, "stop_scroll") == 0) {
+		setScrollOUT = SET;
+		setLineAddress(&handlerI2C1, counter);
+
 	}
-//	else if (com11 == 0){
-//		clearDisplay(&handlerI2C1);
-//		setScrollOUT = SET;
-//
-//
-//	}
+	else if (strcmp(cmd, "clear_display") == 0){
+		clearDisplay(&handlerI2C1);
+
+
+	}
 	else{
 		writeMsg(&handlerUSART2, "WRONG CMD, WRITE IT AGAING \n");
 	}
