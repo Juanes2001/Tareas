@@ -134,8 +134,8 @@ int main(void){
 
 
 
-		x = adcData[0]-2200;
-		y = adcData[1]-2200;
+		x = adcData[0]-2050;
+		y = adcData[1]-2050;
 		vectorArcUp = (180*atan2(y,x))/M_PI;
 		vectorArcDown =180+(180*atan2(-y,-x))/M_PI;
 
@@ -549,6 +549,8 @@ void parseCommands(char *stringVector){
 	}
 	else if (strcmp(cmd, "stop_display") == 0){
 		stopOLED(&handlerI2C1);
+		setScrollOUT = SET;
+		setLineAddress(&handlerI2C1, counter);
 
 	}
 	else if (strcmp(cmd, "print_msg") == 0){
