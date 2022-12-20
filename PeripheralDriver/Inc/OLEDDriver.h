@@ -28,7 +28,6 @@
 
 
 void sendDataBytes(I2C_Handler_t *ptrHandlerI2C, char *dataToSent, uint8_t sizeArray);
-void sendDataOneByte (I2C_Handler_t *ptrHandlerI2C, char oneByte);
 void sendCommandByte ( I2C_Handler_t *ptrHandlerI2C, char command);
 
 //Funciones para la pantalla OLED
@@ -39,7 +38,7 @@ void setPage (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t page);
 void setColumnAddress (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t page);
 void clearDisplay (I2C_Handler_t *ptrHandlerI2Ctr);
 void setLineAddress (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t moveNum);
-void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr,char *msg, uint8_t sizeMsg);
+void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr,char *msg);
 char *letterTochar (uint8_t character);
 
 

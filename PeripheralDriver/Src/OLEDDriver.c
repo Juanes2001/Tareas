@@ -13,8 +13,9 @@
 #include "I2CDriver.h"
 #include "OLEDDriver.h"
 #include "SysTickDriver.h"
+#include "FPUDriver.h"
 
-char letterArray[5] = {0};
+char letterArray[8] = {0};
 //OLED Driver
 
 void sendDataBytes(I2C_Handler_t *ptrHandlerI2C, char *dataBytes, uint8_t sizeArray){
@@ -28,7 +29,7 @@ void sendDataBytes(I2C_Handler_t *ptrHandlerI2C, char *dataBytes, uint8_t sizeAr
 
 	if (sizeArray < 128){
 		for (uint8_t k=0; k < sizeArray; k++){
-				i2c_sendDataByte (ptrHandlerI2C, *(dataBytes+k));
+			i2c_sendDataByte (ptrHandlerI2C, *(dataBytes+k));
 		}
 	}else{
 
@@ -145,7 +146,7 @@ void setLineAddress (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t moveNum){
 
 char *letterTochar (uint8_t character){
 	switch(character){
-		case 'A':{
+		case 'A':
 
 			letterArray[0] = 0b01111000;
 			letterArray[1] = 0b00010100;
@@ -155,7 +156,7 @@ char *letterTochar (uint8_t character){
 
 			break;
 
-		}case 'B':{
+		case 'B':
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01001010;
 			letterArray[2] = 0b01001010;
@@ -163,7 +164,7 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00110100;
 
 			break;
-		}case 'C':{
+		case 'C':
 			letterArray[0] = 0b00111100;
 			letterArray[1] = 0b01000010;
 			letterArray[2] = 0b01000010;
@@ -171,7 +172,7 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00100100;
 
 			break;
-		}case 'D':{
+		case 'D':
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01000010;
 			letterArray[2] = 0b01000010;
@@ -179,7 +180,7 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00111100;
 
 			break;
-		}case 'E':{
+		case 'E':{
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01001010;
 			letterArray[2] = 0b01001010;
@@ -220,11 +221,11 @@ char *letterTochar (uint8_t character){
 
 			break;
 		}case 'J':{
-			letterArray[0] = 0b00000010;
-			letterArray[1] = 0b00000010;
-			letterArray[2] = 0b01111110;
-			letterArray[3] = 0b01000010;
-			letterArray[4] = 0b00110010;
+			letterArray[0] = 0b00110010;
+			letterArray[1] = 0b01000010;
+			letterArray[2] = 0b01000010;
+			letterArray[3] = 0b00111110;
+			letterArray[4] = 0b00000010;
 
 			break;
 		}case 'K':{
@@ -498,40 +499,111 @@ char *letterTochar (uint8_t character){
 
 
 
-void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg , uint8_t sizeMsg){
-
+void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
+	//Limpiamos la pantalla para mostrar un mensaje nuevo
 	clearDisplay(ptrHandlerI2Ctr);
+	uint32_t sizeMsg = 0;
 	uint8_t i = 0;
-//	uint8_t renglones = 0;
-	char mensaje[sizeMsg][8];
-
-
-	if (((sizeMsg-sizeMsg%16)/16) <= 1 ){
+	char characters[8] = {0};
+	char msgRenglon[17] = {0};
+	double renglones = 0;
+	while ((*(msg+i)!='\0')){
+		sizeMsg++;
+		i++;
+	}
+	//Evaluamos si el mensaje a imprimir en la OLED tiene un solo renglos o mas de un renglon
+	// esto implica ver si el mensaje es menor o mayor a 16 caracteres que es el maximo que puede
+	// imprimir una sola pagina.
+	renglones = (sizeMsg)/16;
+	if (renglones <= 1 ){
+		i = 0;
+		sizeMsg = 0;
 		setColumnAddress(ptrHandlerI2Ctr, 0);
+		while ((*(msg+i)!='\0')){
+			sizeMsg++;
+			i++;
+		}
+		i = 0;
+		char mensaje[sizeMsg][8];
 		while (*(msg+i)!='\0'){
-			for (uint8_t j = 0 ; j<8 ; j++){
-				if (*(msg+i) == ' '){
-					for (uint8_t k = 0; k<8 ; k++){
-						mensaje[i][k]= 0;
-					}
-					i++;
-					j--;
-
-				}else if (j<=4){
-					mensaje[i][j]= *(letterTochar (*(msg+i))+j);
-				}else{
-					mensaje[i][j]= 0;
+			if (*(msg+i) == ' '){
+				for (uint8_t k = 0; k<8 ; k++){
+					mensaje[i][k]= 0;
 				}
+				i++;
+			}else{
+				for (uint8_t j = 0 ; j<8 ; j++){
+					if (j<=4){
+						mensaje[i][j]= *(letterTochar (*(msg+i))+j);
+					}else{
+						mensaje[i][j]= 0;
+					}
 			}
 			i++;
 		}
+	}
+
 
 		for (uint8_t s = 0; s < sizeMsg ; s++){
 			for (uint8_t l = 0; l < 8 ; l++){
-				sendDataOneByte(ptrHandlerI2Ctr, mensaje[s][l]);
+				characters[l] = mensaje[s][l];
 			}
+			sendDataBytes(ptrHandlerI2Ctr, characters, 8);
 		}
 
+	}
+	else {
+		i = 0;
+		for (uint8_t n = 0; n < (unsigned char) renglones; n++){
+
+			for (uint8_t m = n*16 ; m < (n*16+16) ; m++){
+				if (*(msg+m) == '\0'){
+					msgRenglon[m-n*16] = *(msg+m);
+					break;
+				}else{
+					msgRenglon[m-n*16] = *(msg+m);
+				}
+			}
+
+			setColumnAddress(ptrHandlerI2Ctr, n);
+			sizeMsg = 0;
+			while ((*(msgRenglon+i)!='\0')){
+				sizeMsg++;
+				i++;
+			}
+			i = 0;
+			char mensaje[sizeMsg][8];
+			while (*(msgRenglon+i)!='\0'){
+					if (*(msgRenglon+i) == ' '){
+						for (uint8_t k = 0; k<8 ; k++){
+							mensaje[i][k]= 0;
+						}
+						i++;
+					}else{
+						for (uint8_t j = 0 ; j<8 ; j++){
+							if (j<=4){
+								mensaje[i][j]= *(letterTochar (*(msgRenglon+i))+j);
+							}else{
+								mensaje[i][j]= 0;
+							}
+					}
+					i++;
+				}
+			}
+
+
+			for (uint8_t s = 0; s < sizeMsg ; s++){
+				for (uint8_t l = 0; l < 8 ; l++){
+					characters[l] = mensaje[s][l];
+				}
+				sendDataBytes(ptrHandlerI2Ctr, characters, 8);
+			}
+			for (uint8_t s = 0; s < sizeMsg ; s++){
+				for (uint8_t l = 0; l < 8 ; l++){
+					mensaje[s][l] = 0;
+				}
+			}
+		}
 	}
 //		else {
 //		renglones = (sizeMsg-sizeMsg%16)/16;
@@ -567,17 +639,4 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg , uint8_t sizeMsg){
 
 }
 
-
-void sendDataOneByte (I2C_Handler_t *ptrHandlerI2C, char oneByte){
-
-		i2c_startTransaction(ptrHandlerI2C);
-
-		i2c_sendSlaveAddressRW(ptrHandlerI2C, ptrHandlerI2C->slaveAddress, I2C_WRITE_DATA);
-
-		i2c_sendDataByte (ptrHandlerI2C, OLED_CONTROLBYTE_DISPLAY);
-
-		i2c_sendDataByte(ptrHandlerI2C, oneByte);
-
-		i2c_stopTransaction(ptrHandlerI2C);
-}
 

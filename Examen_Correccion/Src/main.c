@@ -15,6 +15,7 @@
 #include "AdcDriver.h"
 #include "OLEDDriver.h"
 #include "SysTickDriver.h"
+#include "FPUDriver.h"
 //#include "RTCDriver.h"
 
 #include <stdint.h>
@@ -74,7 +75,6 @@ uint8_t adcFlag = RESET;
 uint8_t rxData = '\0';
 uint8_t counter = 0;
 char cmd[32];
-char userMsg[64];
 
 
 
@@ -82,8 +82,8 @@ unsigned int firstParameter;
 unsigned int secondParameter;
 unsigned int thirdParameter;
 
-char bufferReception[32];
-char bufferMSG[64];
+char bufferReception[256];
+char spaceArrow[64];
 
 uint8_t counterReception = 0;
 uint8_t doneTransaction = RESET;
@@ -134,8 +134,8 @@ int main(void){
 
 
 
-		x = adcData[0]-2050;
-		y = adcData[1]-2050;
+		x = adcData[0]-2100;
+		y = adcData[1]-2100;
 		vectorArcUp = (180*atan2(y,x))/M_PI;
 		vectorArcDown =180+(180*atan2(-y,-x))/M_PI;
 
@@ -173,7 +173,7 @@ int main(void){
 //			writeMsg(&handlerUSART2, bufferMSG);
 
 
-			if (((x>-200) & (x<200)) & ((y>-200) & (y<200)) ){
+			if (((x>-500) & (x<500)) & ((y>-500) & (y<500)) ){
 				updateDuttyCycle(&handlerPwmR, 100);
 				updateDuttyCycle(&handlerPwmG, 100);
 				updateDuttyCycle(&handlerPwmB, 100);
@@ -199,8 +199,6 @@ int main(void){
 				}
 			}
 		}
-
-
 
 		//COMANDOS
 
@@ -390,6 +388,11 @@ void inSystem (void){
 
 	//OLED display por comunicacion I2C
 
+	handlerI2C1.ptrI2Cx = I2C1;
+	handlerI2C1.modeI2C = I2C_MODE_FM;
+	handlerI2C1.slaveAddress = ADDRESS;
+	i2c_config(&handlerI2C1);
+
 	handlerI2cSCL.pGPIOx                             = GPIOB;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinAltFunMode  = AF4;
 	handlerI2cSCL.GPIO_PinConfig.GPIO_PinMode        = GPIO_MODE_ALTFN;
@@ -408,26 +411,23 @@ void inSystem (void){
 	handlerI2cSDA.GPIO_PinConfig.GPIO_PinSpeed       = GPIO_OSPEEDR_FAST;
 	GPIO_Config(&handlerI2cSDA);
 
-	handlerI2C1.ptrI2Cx = I2C1;
-	handlerI2C1.modeI2C = I2C_MODE_FM;
-	handlerI2C1.slaveAddress = ADDRESS;
-	i2c_config(&handlerI2C1);
 
 	//Timer 5 para interrupciones del comando para cronometro
 
 
 
-	handlerDateTim.ptrTIMx = TIM5;
-	handlerDateTim.TIMx_Config.TIMx_interruptEnable = 1;
-	handlerDateTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
-	handlerDateTim.TIMx_Config.TIMx_period = 10000;
-	handlerDateTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
-	BasicTimer_Config(&handlerDateTim);
-
-	startTimer(&handlerDateTim);
+//	handlerDateTim.ptrTIMx = TIM5;
+//	handlerDateTim.TIMx_Config.TIMx_interruptEnable = 1;
+//	handlerDateTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
+//	handlerDateTim.TIMx_Config.TIMx_period = 10000;
+//	handlerDateTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
+//	BasicTimer_Config(&handlerDateTim);
+//
+//	startTimer(&handlerDateTim);
 	config_SysTicksMs();
-
-
+	config_FPU();
+	startOLED(&handlerI2C1);
+	drawMSG(&handlerI2C1, "HOLA MUNDO COMO ESTA");
 
 
 }
@@ -487,12 +487,18 @@ void BasicTimer4_Callback(void){
 //Funcion ejecutadora de comandos
 
 void parseCommands(char *stringVector){
+	uint8_t j = 0;
+	char userMsg[128] = {0};
+	sscanf(stringVector, "%s %u %u %u", cmd ,&firstParameter, &secondParameter, &thirdParameter);
+	for (uint8_t i = strlen(cmd)+1; i < strlen(bufferReception)-2 ; i++){
+		userMsg[j] = bufferReception[i];
+		j++;
+	}
 
-	sscanf(stringVector, "%s %u %u %u %s", cmd ,&firstParameter, &secondParameter, &thirdParameter, userMsg);
+//	writeMsg(&handlerUSART2, cmd);
+//    writeMsg(&handlerUSART2, userMsg);
 
-
-
-	if (strcmp(cmd, "help") == 0){
+    if (strcmp(cmd, "help") == 0){
 		writeMsg(&handlerUSART2, "HELP MENU CMD : \n");
 		writeMsg(&handlerUSART2, "1)  startLED \n"); //
 		writeMsg(&handlerUSART2, "2)  stopLED \n"); //
@@ -500,7 +506,7 @@ void parseCommands(char *stringVector){
  		writeMsg(&handlerUSART2, "4)  resetLED_period \n"); //
 		writeMsg(&handlerUSART2, "5)  start_display \n");   //
 		writeMsg(&handlerUSART2, "6)  stop_display \n");    //
-		writeMsg(&handlerUSART2, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n");                                          //7
+		writeMsg(&handlerUSART2, "7)  print_msg WRITE_MSG_WITH_CAPITAL_LETTERS \n"); //
 		writeMsg(&handlerUSART2, "8)  print_date \n");
 		writeMsg(&handlerUSART2, "9)  set_cronometer #hours #minutes #seconds \n");
 		writeMsg(&handlerUSART2, "10) scroll #1=UP or #0=DOWN \n"); //
@@ -541,10 +547,10 @@ void parseCommands(char *stringVector){
 	}
 	else if (strcmp(cmd, "start_display") == 0){
 		startOLED(&handlerI2C1);
-		drawMSG(&handlerI2C1, "BIENVENIDO!", 11);
-//		for (uint8_t i = 0 ,i < 64 , i++){
-//
-//		}
+		drawMSG(&handlerI2C1, "BIENVENIDO!");
+		delay_Ms(2000);
+		clearDisplay(&handlerI2C1);
+
 
 	}
 	else if (strcmp(cmd, "stop_display") == 0){
@@ -563,13 +569,14 @@ void parseCommands(char *stringVector){
 			}else{
 				__NOP();
 			}
+			i++;
 		}
 
 		if (flag){
 			writeMsg(&handlerUSART2, "REWRITE MESSAGE IN CAPITAL LETTER \n");
 		}
 		else{
-			drawMSG(&handlerI2C1, userMsg, sizeof(userMsg));
+			drawMSG(&handlerI2C1, userMsg);
 		}
 
 
@@ -587,7 +594,7 @@ void parseCommands(char *stringVector){
 //
 //		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
 
-		drawMSG(&handlerI2C1, date, sizeof(date));
+		drawMSG(&handlerI2C1, date);
 
 
 	}
