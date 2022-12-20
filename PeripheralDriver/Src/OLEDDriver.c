@@ -14,6 +14,7 @@
 #include "OLEDDriver.h"
 #include "SysTickDriver.h"
 #include "FPUDriver.h"
+#include "math.h"
 
 char letterArray[8] = {0};
 //OLED Driver
@@ -514,7 +515,7 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
 	//Evaluamos si el mensaje a imprimir en la OLED tiene un solo renglos o mas de un renglon
 	// esto implica ver si el mensaje es menor o mayor a 16 caracteres que es el maximo que puede
 	// imprimir una sola pagina.
-	renglones = (sizeMsg)/16;
+	renglones = (double) (sizeMsg)/16;
 	if (renglones <= 1 ){
 		i = 0;
 		sizeMsg = 0;
@@ -554,7 +555,9 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
 	}
 	else {
 		i = 0;
-		for (uint8_t n = 0; n < (unsigned char) renglones; n++){
+		renglones = ceil(renglones);
+		for (uint8_t n = 0; n < renglones; n++){
+			i = 0;
 
 			for (uint8_t m = n*16 ; m < (n*16+16) ; m++){
 				if (*(msg+m) == '\0'){
@@ -580,13 +583,26 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
 						}
 						i++;
 					}else{
-						for (uint8_t j = 0 ; j<8 ; j++){
-							if (j<=4){
-								mensaje[i][j]= *(letterTochar (*(msgRenglon+i))+j);
-							}else{
-								mensaje[i][j]= 0;
+						if ((i == 15) && (*(msg+(i*n)+1)!='\0')){
+							for (uint8_t j = 0 ; j<8 ; j++){
+								if (j<=4){
+									mensaje[i][j]= *(letterTochar (*(msgRenglon+i))+j);
+								}else{
+									mensaje[i][j]= 0;
+									mensaje[i][j+1]= 0b00010000;
+									mensaje[i][j+2]= 0b00010000;
+									break;
+								}
 							}
-					}
+						}else{
+							for (uint8_t j = 0 ; j<8 ; j++){
+								if (j<=4){
+									mensaje[i][j]= *(letterTochar (*(msgRenglon+i))+j);
+								}else{
+									mensaje[i][j]= 0;
+								}
+							}
+						}
 					i++;
 				}
 			}
@@ -605,38 +621,6 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
 			}
 		}
 	}
-//		else {
-//		renglones = (sizeMsg-sizeMsg%16)/16;
-//
-//		for (uint8_t t=0; t<renglones ; t++){
-//			setColumnAddress(ptrHandlerI2Ctr, t);
-//			while (*(msg+i)!='\0'){
-//				for (uint8_t j = 0 ; j<8 ; j++){
-//					if (*(msg+i) == ' '){
-//						for (uint8_t k = 0; k<8 ; k++){
-//							mensaje[i][k]= 0;
-//						}
-//
-//					}else if (j<=4){
-//						mensaje[i][j]= *(letterTochar (*(msg+i))+j);
-//					}else{
-//						mensaje[i][j]= 0;
-//					}
-//				}
-//				i++;
-//			}
-//
-//			for (uint8_t s = 0; s < sizeMsg ; s++){
-//				for (uint8_t l = 0; l < 8 ; l++){
-//					sendDataOneByte(ptrHandlerI2Ctr, mensaje[s][l]);
-//				}
-//			}
-//
-//		}
-//	}
-
-
-
 }
 
 

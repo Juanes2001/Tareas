@@ -427,7 +427,7 @@ void inSystem (void){
 	config_SysTicksMs();
 	config_FPU();
 	startOLED(&handlerI2C1);
-	drawMSG(&handlerI2C1, "HOLA MUNDO COMO ESTA");
+	drawMSG(&handlerI2C1, "HOLA MUNDO COMOOO ESTAS YO BIEN ME ALEGRO MUCHO DE QUE ESTEMOS BIEN TODOS");
 
 
 }

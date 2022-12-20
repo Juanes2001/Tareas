@@ -11,12 +11,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "FPUDriver.h"
 
 //char cmd[64] = "GANO";
 char prueba[2][2] ={{1,2},{3,4}} ;
 char almacenamiento[64];
 char elemento = 0;
 uint8_t j = 0;
+double racional = 0;
 
 int main(void){
 //	for (uint8_t i = strlen(cmd)+1; i < strlen(prueba)-2 ; i++){
@@ -27,6 +29,9 @@ int main(void){
 //			j++;
 //		}
 //	}
+	config_FPU();
+
+	racional =(double) 5/3;
 
 
 	while(1){
