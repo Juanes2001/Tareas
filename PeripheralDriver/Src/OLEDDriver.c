@@ -156,6 +156,15 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b01111000;
 
 			break;
+		case 'a':
+
+			letterArray[0] = 0b00110000;
+			letterArray[1] = 0b01001000;
+			letterArray[2] = 0b01001000;
+			letterArray[3] = 0b00101000;
+			letterArray[4] = 0b01111000;
+
+			break;
 
 		case 'B':
 			letterArray[0] = 0b01111110;
@@ -163,6 +172,14 @@ char *letterTochar (uint8_t character){
 			letterArray[2] = 0b01001010;
 			letterArray[3] = 0b01001010;
 			letterArray[4] = 0b00110100;
+
+			break;
+		case 'b':
+			letterArray[0] = 0b01111110;
+			letterArray[1] = 0b01010000;
+			letterArray[2] = 0b01010000;
+			letterArray[3] = 0b01010000;
+			letterArray[4] = 0b00100000;
 
 			break;
 		case 'C':
@@ -173,6 +190,14 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00100100;
 
 			break;
+		case 'c':
+			letterArray[0] = 0b00110000;
+			letterArray[1] = 0b01001000;
+			letterArray[2] = 0b01001000;
+			letterArray[3] = 0b01001000;
+			letterArray[4] = 0b00100000;
+
+			break;
 		case 'D':
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01000010;
@@ -181,7 +206,15 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00111100;
 
 			break;
-		case 'E':{
+		case 'd':
+			letterArray[0] = 0b00100000;
+			letterArray[1] = 0b01010000;
+			letterArray[2] = 0b01010000;
+			letterArray[3] = 0b01010000;
+			letterArray[4] = 0b01111110;
+
+			break;
+		case 'E':
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b01001010;
 			letterArray[2] = 0b01001010;
@@ -189,7 +222,15 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b01000010;
 
 			break;
-		}case 'F':{
+		case 'e':
+			letterArray[0] = 0b00111000;
+			letterArray[1] = 0b01010100;
+			letterArray[2] = 0b01010100;
+			letterArray[3] = 0b01010100;
+			letterArray[4] = 0b01001000;
+
+			break;
+		case 'F':
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b00001010;
 			letterArray[2] = 0b00001010;
@@ -197,7 +238,15 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00000010;
 
 			break;
-		}case 'G':{
+		case 'f':
+			letterArray[0] = 0b01111000;
+			letterArray[1] = 0b00010100;
+			letterArray[2] = 0b00010100;
+			letterArray[3] = 0b00000100;
+			letterArray[4] = 0b00001000;
+
+			break;
+		case 'G':
 			letterArray[0] = 0b00111100;
 			letterArray[1] = 0b01000010;
 			letterArray[2] = 0b01010010;
@@ -205,7 +254,15 @@ char *letterTochar (uint8_t character){
 			letterArray[4] = 0b00110100;
 
 			break;
-		}case 'H':{
+		case 'g':
+			letterArray[0] = 0b00100000;
+			letterArray[1] = 0b01001000;
+			letterArray[2] = 0b01010100;
+			letterArray[3] = 0b01010100;
+			letterArray[4] = 0b00111000;
+
+			break;
+		case 'H':{
 			letterArray[0] = 0b01111110;
 			letterArray[1] = 0b00001000;
 			letterArray[2] = 0b00001000;
