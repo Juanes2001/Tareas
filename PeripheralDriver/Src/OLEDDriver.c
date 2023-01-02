@@ -681,3 +681,48 @@ void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg){
 }
 
 
+void drawSinglePageMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg, uint8_t page){
+	uint32_t sizeMsg = 0;
+	uint8_t i = 0;
+	char characters[8] = {0};
+	while ((*(msg+i)!='\0')){
+		sizeMsg++;
+		i++;
+	}
+	i = 0;
+	sizeMsg = 0;
+	setColumnAddress(ptrHandlerI2Ctr, page);
+	while ((*(msg+i)!='\0')){
+		sizeMsg++;
+		i++;
+	}
+	i = 0;
+	char mensaje[sizeMsg][8];
+	while (*(msg+i)!='\0'){
+		if (*(msg+i) == ' '){
+			for (uint8_t k = 0; k<8 ; k++){
+				mensaje[i][k]= 0;
+			}
+			i++;
+		}else{
+			for (uint8_t j = 0 ; j<8 ; j++){
+				if (j<=4){
+					mensaje[i][j]= *(letterTochar (*(msg+i))+j);
+				}else{
+					mensaje[i][j]= 0;
+				}
+			}
+			i++;
+		}
+	}
+
+
+	for (uint8_t s = 0; s < sizeMsg ; s++){
+		for (uint8_t l = 0; l < 8 ; l++){
+			characters[l] = mensaje[s][l];
+		}
+		sendDataBytes(ptrHandlerI2Ctr, characters, 8);
+	}
+}
+
+

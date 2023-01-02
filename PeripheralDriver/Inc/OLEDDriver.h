@@ -39,6 +39,7 @@ void setColumnAddress (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t page);
 void clearDisplay (I2C_Handler_t *ptrHandlerI2Ctr);
 void setLineAddress (I2C_Handler_t *ptrHandlerI2Ctr, uint8_t moveNum);
 void drawMSG (I2C_Handler_t *ptrHandlerI2Ctr,char *msg);
+void drawSinglePageMSG (I2C_Handler_t *ptrHandlerI2Ctr, char *msg,uint8_t page);
 char *letterTochar (uint8_t character);
 
 

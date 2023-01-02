@@ -16,7 +16,7 @@
 #include "OLEDDriver.h"
 #include "SysTickDriver.h"
 #include "FPUDriver.h"
-//#include "RTCDriver.h"
+#include "RTCDriver.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -62,7 +62,7 @@ BasicTimer_Handler_t handlerDateTim = {0};
 I2C_Handler_t handlerI2C1 = {0};
 
 //handler para el tiempo actual
-//RTC_Handler_t handlerRTC = {0};
+RTC_Handler_t handlerRTC = {0};
 
 
 void inSystem (void);
@@ -112,7 +112,10 @@ char date[16];
 uint8_t  sec = 0;
 uint8_t  min = 0;
 uint8_t  hours = 0;
-
+uint8_t  day = 0;
+uint8_t  weekDay = 0;
+uint8_t  month = 0;
+uint8_t  year = 0;
 uint8_t setScrollIN = RESET;
 uint8_t setScrollOUT = SET;
 uint8_t setScrollUP = RESET;
@@ -229,15 +232,21 @@ int main(void){
 			doneTransaction = RESET;
 		}
 
-//		if (flagDate){
-//			sec = *(getDate());
-//			min = *(getDate()+1);
-//			hours = *(getDate()+2);
-//
-//			sprintf(date, "%u:%u:%u",hours,min,sec);
-//			drawMSG(&handlerI2C1, date, sizeof(date));
-//			flagDate = RESET;
-//		}
+		if (flagDate){
+			sec = *(getDate());
+			min = *(getDate()+1);
+			hours = *(getDate()+2);
+			weekDay = *(getDate()+3);
+			day = *(getDate()+4);
+			month = *(getDate()+5);
+			year = *(getDate()+6);
+
+			sprintf(date,"%u/%u/%u",year,month,day);
+			drawSinglePageMSG(&handlerI2C1, date, 0);
+			sprintf(date,"%u:%u:%u",hours,min,sec);
+			drawSinglePageMSG(&handlerI2C1, date, 1);
+			flagDate = RESET;
+		}
 
 
 
@@ -248,6 +257,17 @@ int main(void){
 void inSystem (void){
 
 	//Descripcion de la configuracion
+
+	//Configuracion del RTC
+	handlerRTC.RTC_config.rtcDay = 8;
+	handlerRTC.RTC_config.rtcHours = 22;
+	handlerRTC.RTC_config.rtcMinutes = 50;
+	handlerRTC.RTC_config.rtcMonth = 11;
+	handlerRTC.RTC_config.rtcSeconds =3;
+	handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
+	handlerRTC.RTC_config.rtcYear= 23;
+	Rtc_Congif(&handlerRTC);
+
 
 	//BLINKY LED
 
@@ -375,17 +395,6 @@ void inSystem (void){
 	handlerPwmB.config.prescaler  = BTIMER_SPEED_100us;
 	pwm_Config(&handlerPwmB);
 
-
-    //Configuracion del RTC
-//	handlerRTC.RTC_config.rtcDay = 8;
-//	handlerRTC.RTC_config.rtcHours = 0;
-//	handlerRTC.RTC_config.rtcMinutes = 0;
-//	handlerRTC.RTC_config.rtcMonth = 11;
-//	handlerRTC.RTC_config.rtcSeconds =0;
-//	handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
-//	handlerRTC.RTC_config.rtcYear= 22;
-//	Rtc_Congif(&handlerRTC);
-
 	//OLED display por comunicacion I2C
 
 	handlerI2C1.ptrI2Cx = I2C1;
@@ -413,21 +422,17 @@ void inSystem (void){
 
 
 	//Timer 5 para interrupciones del comando para cronometro
-
-
-
 //	handlerDateTim.ptrTIMx = TIM5;
 //	handlerDateTim.TIMx_Config.TIMx_interruptEnable = 1;
 //	handlerDateTim.TIMx_Config.TIMx_mode = BTIMER_MODE_UP;
 //	handlerDateTim.TIMx_Config.TIMx_period = 10000;
 //	handlerDateTim.TIMx_Config.TIMx_speed = BTIMER_SPEED_100us;
 //	BasicTimer_Config(&handlerDateTim);
-//
-//	startTimer(&handlerDateTim);
+
+
 	config_SysTicksMs();
 	config_FPU();
-	startOLED(&handlerI2C1);
-	drawMSG(&handlerI2C1, "gaba");
+
 
 
 }
@@ -450,9 +455,9 @@ void BasicTimer2_Callback(void){
 
 //Callback para el comando del cronometro
 
-void BasicTimer5_Callback(void){
-	flagDate = SET;
-}
+//void BasicTimer5_Callback(void){
+//	flagDate = SET;
+//}
 
 //Callback para interrupciones posterior a la multiconversion
 
@@ -554,6 +559,8 @@ void parseCommands(char *stringVector){
 
 	}
 	else if (strcmp(cmd, "stop_display") == 0){
+		drawMSG(&handlerI2C1, "NOS VEMOS EN LA PROXIMA!");
+		delay_Ms(2000);
 		stopOLED(&handlerI2C1);
 		setScrollOUT = SET;
 		setLineAddress(&handlerI2C1, counter);
@@ -583,20 +590,7 @@ void parseCommands(char *stringVector){
 
 	}
 	else if (strcmp(cmd, "print_date") == 0){
-//		handlerRTC.RTC_config.rtcDay = 8;
-//		handlerRTC.RTC_config.rtcHours = firstParameter;
-//		handlerRTC.RTC_config.rtcMinutes = secondParameter;
-//		handlerRTC.RTC_config.rtcMonth = 11;
-//		handlerRTC.RTC_config.rtcSeconds =thirdParameter;
-//		handlerRTC.RTC_config.rtcWeekDay = THUESDAY;
-//		handlerRTC.RTC_config.rtcYear= 22;
-//		Rtc_Congif(&handlerRTC);
-//
-//		sprintf(date,"%u/%u/%u%u:%u:%u",22,11,8,firstParameter,secondParameter,thirdParameter);
-
-		drawMSG(&handlerI2C1, date);
-
-
+		flagDate = SET;
 	}
 	else if (strcmp(cmd, "set_cronometer") == 0){
 //		handlerRTC.RTC_config.rtcDay = 8;
